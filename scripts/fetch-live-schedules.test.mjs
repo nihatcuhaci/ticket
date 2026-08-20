@@ -78,6 +78,39 @@ test('matchStops maps GTFS stop_ids to EuroTrain station ids by name, ignoring u
   assert.equal(map.has('STOP_UNMATCHED'), false);
 });
 
+test('matchStops handles the real feed\'s hyphenated stop_name style', () => {
+  // Regression test: a live run against the real Eurostar GTFS feed
+  // initially matched only 3/9 stations because the feed hyphenates
+  // multi-word names ("Amsterdam-Centraal", "St-Pancras-International")
+  // while STATION_KEYWORDS was written space-separated. Fixed in
+  // normalizeName() by folding hyphens to spaces before matching; this
+  // locks that fix in with the exact real names from that run's log.
+  const realStops = parseCsv(
+    [
+      'stop_id,stop_name',
+      'S1,St-Pancras-International',
+      'S2,Paris-Nord',
+      'S3,Amsterdam-Centraal',
+      'S4,Rotterdam-Centraal',
+      'S5,Lille-Europe',
+      'S6,Marne-la-Vallée-Chessy',
+      'S7,Bruxelles-Midi',
+      'S8,Köln Hbf',
+      'S9,Antwerpen-Centraal', // not one of our 9 stations — must not match anything
+    ].join('\n')
+  );
+  const map = matchStops(realStops);
+  assert.equal(map.get('S1'), 'lon');
+  assert.equal(map.get('S2'), 'par');
+  assert.equal(map.get('S3'), 'ams');
+  assert.equal(map.get('S4'), 'rtd');
+  assert.equal(map.get('S5'), 'lil');
+  assert.equal(map.get('S6'), 'dlp');
+  assert.equal(map.get('S7'), 'bru');
+  assert.equal(map.get('S8'), 'cgn');
+  assert.equal(map.has('S9'), false);
+});
+
 test('dateRange produces `days` consecutive ISO dates starting from startISO', () => {
   const dates = dateRange('2026-08-20', 5);
   assert.deepEqual(dates, [

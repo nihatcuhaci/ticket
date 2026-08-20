@@ -66,11 +66,19 @@ export function parseCsv(text) {
  * used for the eurostarId deep-link ids (see stations.ts), just applied
  * automatically instead of by hand.
  */
+// Written space-separated; normalizeName() folds the real feed's hyphens
+// ("Amsterdam-Centraal", "St-Pancras-International") to spaces before
+// matching, so these don't need a separate hyphenated variant of each.
+// Verified against a live run of the real feed (see git history) for
+// every station except brg — Bruges/Brugge isn't in this feed at all,
+// which is expected: it's the one route in routes.ts that isn't a
+// direct through-train, so it was never going to get live coverage
+// anyway (see README's Known Limitations).
 export const STATION_KEYWORDS = {
   lon: ['st pancras'],
   par: ['gare du nord', 'paris nord'],
-  dlp: ['marne-la-vallee', 'marne la vallee', 'disneyland'],
-  bru: ['bruxelles-midi', 'bruxelles midi', 'brussel-zuid', 'brussels-midi', 'brussel zuid'],
+  dlp: ['marne la vallee', 'disneyland'],
+  bru: ['bruxelles midi', 'brussel zuid', 'brussels midi'],
   ams: ['amsterdam centraal'],
   rtd: ['rotterdam centraal'],
   lil: ['lille europe'],
@@ -78,12 +86,21 @@ export const STATION_KEYWORDS = {
   brg: ['brugge', 'bruges'],
 };
 
-/** Lowercases and strips diacritics so "Köln" and "koln" compare equal. */
+/**
+ * Lowercases, strips diacritics ("Köln" == "koln"), and folds separator
+ * punctuation to spaces so "Amsterdam-Centraal"/"St-Pancras-International"
+ * (the real feed's actual hyphenated naming, confirmed against a live
+ * run — see gtfs-lib.mjs's git history) match keyword phrases written
+ * with spaces, without needing a separate hyphenated keyword for every
+ * station.
+ */
 export function normalizeName(name) {
   return name
     .normalize('NFD')
     .replace(/[̀-ͯ]/g, '')
     .toLowerCase()
+    .replace(/[-_/]+/g, ' ')
+    .replace(/\s+/g, ' ')
     .trim();
 }
 
