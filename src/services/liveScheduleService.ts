@@ -31,7 +31,7 @@ import { buildFares } from './journeyGenerator';
  * and behave consistently in the UI.
  */
 
-const LIVE_SCHEDULE_REPO = 'YOUR_GITHUB_USERNAME/YOUR_REPO_NAME';
+const LIVE_SCHEDULE_REPO = 'nihatcuhacii/eurotrain-mvp';
 const LIVE_SCHEDULE_URL = `https://raw.githubusercontent.com/${LIVE_SCHEDULE_REPO}/data/live-schedules.json`;
 const FETCH_TIMEOUT_MS = 4000;
 const CACHE_TTL_MS = 5 * 60 * 1000; // matches the workflow's 15-min refresh cadence closely enough
