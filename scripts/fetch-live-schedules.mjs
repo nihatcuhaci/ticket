@@ -31,6 +31,7 @@ import {
   buildServiceDates,
   dateRange,
   legsForTrip,
+  STATION_KEYWORDS,
 } from './gtfs-lib.mjs';
 
 const STATIC_URL =
@@ -105,7 +106,26 @@ export function buildLiveSchedule(
   coverageDays = COVERAGE_DAYS
 ) {
   const stopIdToStation = matchStops(stops);
-  console.log(`Matched ${stopIdToStation.size} GTFS stop_ids to EuroTrain stations.`);
+  const matchedStationIds = new Set(stopIdToStation.values());
+  console.log(
+    `Matched ${stopIdToStation.size} GTFS stop_ids to ${matchedStationIds.size}/9 EuroTrain stations.`
+  );
+  const unmatchedStations = Object.keys(STATION_KEYWORDS).filter((id) => !matchedStationIds.has(id));
+  if (unmatchedStations.length > 0) {
+    // Diagnostic, not an error: the keyword lists in gtfs-lib.mjs are a
+    // best-effort guess at real stop naming (this sandbox can't reach the
+    // real feed to verify them ahead of time, see README §9). When a
+    // station comes up empty, dump every real stop_name in the feed so
+    // the actual naming can be read off a live run's log and the
+    // keyword list corrected in one pass, instead of guessing again.
+    console.warn(
+      `No stops matched for: ${unmatchedStations.join(', ')} — dumping every stop_name in the ` +
+        `feed below so STATION_KEYWORDS in gtfs-lib.mjs can be corrected against real data.`
+    );
+    const uniqueNames = [...new Set(stops.map((s) => s.stop_name).filter(Boolean))].sort();
+    console.log(`All ${uniqueNames.length} unique stop_name values in the feed:`);
+    uniqueNames.forEach((name) => console.log(`  - ${name}`));
+  }
 
   const tripIdToServiceId = new Map(trips.map((t) => [t.trip_id, t.service_id]));
 
