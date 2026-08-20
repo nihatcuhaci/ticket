@@ -39,14 +39,27 @@ export const PrimaryButton: React.FC<{
 export const SecondaryButton: React.FC<{
   label: string;
   onPress: () => void;
+  disabled?: boolean;
+  loading?: boolean;
   style?: ViewStyle;
-}> = ({ label, onPress, style }) => (
+}> = ({ label, onPress, disabled, loading, style }) => (
   <Pressable
     accessibilityRole="button"
+    accessibilityState={{ disabled: !!disabled || !!loading }}
     onPress={onPress}
-    style={({ pressed }) => [styles.secondaryBtn, pressed && styles.pressed, style]}
+    disabled={disabled || loading}
+    style={({ pressed }) => [
+      styles.secondaryBtn,
+      (disabled || loading) && styles.secondaryBtnDisabled,
+      pressed && !disabled && !loading && styles.pressed,
+      style,
+    ]}
   >
-    <Text style={styles.secondaryBtnText}>{label}</Text>
+    {loading ? (
+      <ActivityIndicator color={colors.navy700} />
+    ) : (
+      <Text style={styles.secondaryBtnText}>{label}</Text>
+    )}
   </Pressable>
 );
 
@@ -102,6 +115,9 @@ const styles = StyleSheet.create({
     paddingVertical: 13,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  secondaryBtnDisabled: {
+    borderColor: colors.gray200,
   },
   secondaryBtnText: {
     ...typography.bodyStrong,

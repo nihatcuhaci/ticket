@@ -1,13 +1,5 @@
-import React, { useMemo, useState } from 'react';
-import {
-  Alert,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import React, { useState } from 'react';
+import { Alert, Linking, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -16,64 +8,65 @@ import { colors, radius, spacing, typography } from '../theme';
 import { useAppState } from '../state/AppState';
 import { stationById } from '../data/stations';
 import { fareClassById } from '../data/fareClasses';
-import { PaymentMethodId } from '../types';
-import { PrimaryButton } from '../components/ui';
-import { submitBooking } from '../services/bookingService';
+import { PrimaryButton, SecondaryButton } from '../components/ui';
+import { buildEurostarSearchUrl } from '../services/eurostarLink';
 import { useExchangeRates } from '../hooks/useExchangeRates';
 import { convert, formatCurrency } from '../services/currencyService';
+import { SelectedFare } from '../types';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Checkout'>;
 
-const PAYMENT_METHODS: { id: PaymentMethodId; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
-  { id: 'card', label: 'Kredi / Banka Kartı', icon: 'card-outline' },
-  { id: 'apple_pay', label: 'Apple Pay', icon: 'logo-apple' },
-  { id: 'paypal', label: 'PayPal', icon: 'logo-paypal' },
-];
+const TripLegCard: React.FC<{ label?: string; leg: SelectedFare }> = ({ label, leg }) => {
+  const origin = stationById(leg.journey.originId);
+  const destination = stationById(leg.journey.destinationId);
+  const fareClass = fareClassById(leg.fareClassId);
+  return (
+    <View style={styles.tripCard}>
+      {label && <Text style={styles.tripLegLabel}>{label}</Text>}
+      <Text style={styles.tripRoute}>
+        {origin?.city} → {destination?.city}
+      </Text>
+      <Text style={styles.tripDetail}>
+        {leg.journey.date} · {leg.journey.departureTime}-{leg.journey.arrivalTime} · {fareClass?.label}
+      </Text>
+    </View>
+  );
+};
 
 export default function CheckoutScreen({ navigation }: Props) {
-  const { selection, passenger, setPassenger, setConfirmation } = useAppState();
+  const { criteria, selection, returnSelection } = useAppState();
   const { rates } = useExchangeRates();
-  const [payment, setPayment] = useState<PaymentMethodId>('card');
-  const [acceptedTerms, setAcceptedTerms] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [opening, setOpening] = useState(false);
+  const isRoundTrip = criteria.tripType === 'roundtrip';
 
-  const origin = selection ? stationById(selection.journey.originId) : undefined;
-  const destination = selection ? stationById(selection.journey.destinationId) : undefined;
-  const fareClass = selection ? fareClassById(selection.fareClassId) : undefined;
-
-  const totalEUR = selection?.price ?? 0;
+  const totalEUR = (selection?.price ?? 0) + (isRoundTrip ? returnSelection?.price ?? 0 : 0);
   const totalLabel = rates ? formatCurrency(convert(totalEUR, 'EUR', rates), 'EUR') : `€${totalEUR}`;
 
-  const validate = () => {
-    const next: Record<string, string> = {};
-    if (!passenger.firstName.trim()) next.firstName = 'Ad gerekli';
-    if (!passenger.lastName.trim()) next.lastName = 'Soyad gerekli';
-    if (!/^\S+@\S+\.\S+$/.test(passenger.email)) next.email = 'Geçerli bir e-posta girin';
-    if (!acceptedTerms) next.terms = 'Devam etmek için şartları kabul edin';
-    setErrors(next);
-    return Object.keys(next).length === 0;
-  };
-
-  const handlePay = async () => {
+  const handleContinue = async () => {
     if (!selection) return;
-    if (!validate()) return;
-    setSubmitting(true);
+    const url = buildEurostarSearchUrl(
+      selection.journey.originId,
+      selection.journey.destinationId,
+      selection.journey.date,
+      criteria.passengers,
+      isRoundTrip ? returnSelection?.journey.date : null
+    );
+    if (!url) {
+      Alert.alert('Yönlendirilemedi', 'Bu güzergah için eurostar.com bağlantısı oluşturulamadı.');
+      return;
+    }
+    setOpening(true);
     try {
-      const confirmation = await submitBooking(selection, passenger, payment, totalEUR, 'EUR');
-      setConfirmation(confirmation);
+      await Linking.openURL(url);
       navigation.replace('Confirmation');
     } catch (e) {
-      Alert.alert(
-        'Ödeme alınamadı',
-        'Bu bir demo ödeme akışıdır ve rastgele başarısız olabilir. Lütfen tekrar deneyin.'
-      );
+      Alert.alert('Açılamadı', 'eurostar.com şu anda açılamadı. Lütfen tekrar deneyin.');
     } finally {
-      setSubmitting(false);
+      setOpening(false);
     }
   };
 
-  if (!selection || !origin || !destination || !fareClass) {
+  if (!selection) {
     return (
       <SafeAreaView style={styles.safe}>
         <View style={styles.centerState}>
@@ -84,105 +77,53 @@ export default function CheckoutScreen({ navigation }: Props) {
     );
   }
 
+  if (isRoundTrip && !returnSelection) {
+    return (
+      <SafeAreaView style={styles.safe}>
+        <View style={styles.centerState}>
+          <Text style={typography.body as any}>Önce dönüş seferini de seçmelisiniz.</Text>
+          <SecondaryButton label="Sonuçlara dön" onPress={() => navigation.goBack()} style={{ marginTop: spacing.lg }} />
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
-        <View style={styles.tripCard}>
-          <Text style={styles.tripRoute}>
-            {origin.city} → {destination.city}
-          </Text>
-          <Text style={styles.tripDetail}>
-            {selection.journey.date} · {selection.journey.departureTime}-{selection.journey.arrivalTime} ·{' '}
-            {fareClass.label}
-          </Text>
-        </View>
+        <TripLegCard label={isRoundTrip ? 'Gidiş' : undefined} leg={selection} />
+        {isRoundTrip && returnSelection && <TripLegCard label="Dönüş" leg={returnSelection} />}
 
-        <Text style={styles.sectionTitle}>Yolcu bilgileri</Text>
+        <Text style={styles.sectionTitle}>Fiyat özeti</Text>
         <View style={styles.formCard}>
-          <View style={styles.rowFields}>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.label}>Ad</Text>
-              <TextInput
-                value={passenger.firstName}
-                onChangeText={(v) => setPassenger({ ...passenger, firstName: v })}
-                style={[styles.input, errors.firstName && styles.inputError]}
-                placeholder="Ad"
-              />
-              {errors.firstName && <Text style={styles.errorText}>{errors.firstName}</Text>}
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.label}>Soyad</Text>
-              <TextInput
-                value={passenger.lastName}
-                onChangeText={(v) => setPassenger({ ...passenger, lastName: v })}
-                style={[styles.input, errors.lastName && styles.inputError]}
-                placeholder="Soyad"
-              />
-              {errors.lastName && <Text style={styles.errorText}>{errors.lastName}</Text>}
-            </View>
+          <View style={styles.priceRow}>
+            <Text style={styles.priceLabel}>
+              Bu uygulamada gösterilen tahmini {isRoundTrip ? 'toplam ' : ''}fiyat
+            </Text>
+            <Text style={styles.priceValue}>{totalLabel}</Text>
           </View>
-
-          <Text style={styles.label}>E-posta</Text>
-          <TextInput
-            value={passenger.email}
-            onChangeText={(v) => setPassenger({ ...passenger, email: v })}
-            style={[styles.input, errors.email && styles.inputError]}
-            placeholder="ornek@eposta.com"
-            keyboardType="email-address"
-            autoCapitalize="none"
-          />
-          {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
-
-          <Text style={styles.label}>Telefon (opsiyonel)</Text>
-          <TextInput
-            value={passenger.phone}
-            onChangeText={(v) => setPassenger({ ...passenger, phone: v })}
-            style={styles.input}
-            placeholder="+90 5xx xxx xx xx"
-            keyboardType="phone-pad"
-          />
+          <Text style={styles.priceNote}>
+            Kesin fiyat, koltuk uygunluğu ve varsa promosyonlar eurostar.com üzerinde değişiklik gösterebilir.
+          </Text>
         </View>
 
-        <Text style={styles.sectionTitle}>Ödeme yöntemi</Text>
-        <View style={styles.paymentRow}>
-          {PAYMENT_METHODS.map((m) => (
-            <Pressable
-              key={m.id}
-              onPress={() => setPayment(m.id)}
-              style={[styles.paymentChip, payment === m.id && styles.paymentChipSelected]}
-              accessibilityRole="button"
-            >
-              <Ionicons name={m.icon} size={18} color={payment === m.id ? colors.white : colors.navy700} />
-              <Text style={[styles.paymentLabel, payment === m.id && styles.textOnSelected]}>{m.label}</Text>
-            </Pressable>
-          ))}
+        <View style={styles.infoCard}>
+          <Ionicons name="information-circle-outline" size={18} color={colors.navy700} />
+          <Text style={styles.infoText}>
+            EuroTrain, ödeme veya bilet ihracı yapmaz. "Eurostar.com'da devam et" seçildiğinde aynı
+            güzergah, {isRoundTrip ? 'gidiş-dönüş tarihleri' : 'tarih'} ve yolcu sayısıyla
+            eurostar.com'un gerçek arama sonuçlarına yönlendirilirsiniz; satın alma işlemi tamamen
+            Eurostar'ın kendi sitesinde, kendi güvenli ödeme altyapısıyla tamamlanır.
+          </Text>
         </View>
-        <Text style={styles.demoNote}>
-          Bu bir demo ödeme akışıdır — gerçek kart bilgisi istenmez veya saklanmaz.
-        </Text>
-
-        <Pressable
-          style={styles.termsRow}
-          onPress={() => setAcceptedTerms((v) => !v)}
-          accessibilityRole="checkbox"
-          accessibilityState={{ checked: acceptedTerms }}
-        >
-          <Ionicons
-            name={acceptedTerms ? 'checkbox' : 'square-outline'}
-            size={22}
-            color={acceptedTerms ? colors.teal500 : colors.gray400}
-          />
-          <Text style={styles.termsText}>Şartlar ve Koşullar ile Bilet Koşullarını kabul ediyorum.</Text>
-        </Pressable>
-        {errors.terms && <Text style={styles.errorText}>{errors.terms}</Text>}
       </ScrollView>
 
       <View style={styles.footer}>
         <View style={styles.footerTotalRow}>
-          <Text style={styles.totalLabel}>Toplam</Text>
+          <Text style={styles.totalLabel}>Tahmini toplam</Text>
           <Text style={styles.totalPrice}>{totalLabel}</Text>
         </View>
-        <PrimaryButton label="Öde ve rezervasyonu tamamla" onPress={handlePay} loading={submitting} />
+        <PrimaryButton label="Eurostar.com'da devam et" onPress={handleContinue} loading={opening} />
       </View>
     </SafeAreaView>
   );
@@ -195,12 +136,18 @@ const styles = StyleSheet.create({
     backgroundColor: colors.navy900,
     borderRadius: radius.lg,
     padding: spacing.lg,
-    marginBottom: spacing.xl,
+    marginBottom: spacing.md,
     marginTop: spacing.xs,
+  },
+  tripLegLabel: {
+    ...typography.tiny,
+    color: colors.amber500,
+    textTransform: 'uppercase',
+    marginBottom: 4,
   },
   tripRoute: { ...typography.h3, color: colors.white },
   tripDetail: { ...typography.caption, color: colors.gray200, marginTop: spacing.xs },
-  sectionTitle: { ...typography.h3, color: colors.navy900, marginBottom: spacing.sm },
+  sectionTitle: { ...typography.h3, color: colors.navy900, marginBottom: spacing.sm, marginTop: spacing.md },
   formCard: {
     backgroundColor: colors.white,
     borderRadius: radius.lg,
@@ -210,37 +157,18 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xl,
     gap: 4,
   },
-  rowFields: { flexDirection: 'row', gap: spacing.md },
-  label: { ...typography.captionStrong, color: colors.gray600, marginTop: spacing.md, marginBottom: 4 },
-  input: {
-    borderWidth: 1,
-    borderColor: colors.gray200,
-    borderRadius: radius.sm,
-    paddingHorizontal: spacing.md,
-    paddingVertical: 10,
-    ...typography.body,
-    color: colors.navy900,
-  },
-  inputError: { borderColor: colors.error },
-  errorText: { ...typography.tiny, color: colors.error, marginTop: 4 },
-  paymentRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginBottom: spacing.xs },
-  paymentChip: {
+  priceRow: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' },
+  priceLabel: { ...typography.caption, color: colors.gray600, flex: 1, marginRight: spacing.md },
+  priceValue: { ...typography.h2, color: colors.navy900 },
+  priceNote: { ...typography.tiny, color: colors.gray400, marginTop: spacing.sm },
+  infoCard: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderRadius: radius.pill,
-    borderWidth: 1,
-    borderColor: colors.gray200,
-    backgroundColor: colors.white,
+    gap: spacing.sm,
+    backgroundColor: colors.teal100,
+    borderRadius: radius.md,
+    padding: spacing.md,
   },
-  paymentChipSelected: { backgroundColor: colors.navy800, borderColor: colors.navy800 },
-  paymentLabel: { ...typography.captionStrong, color: colors.navy700 },
-  textOnSelected: { color: colors.white },
-  demoNote: { ...typography.tiny, color: colors.gray400, marginTop: spacing.sm, marginBottom: spacing.xl },
-  termsRow: { flexDirection: 'row', gap: spacing.sm, alignItems: 'flex-start' },
-  termsText: { ...typography.caption, color: colors.gray600, flex: 1 },
+  infoText: { ...typography.caption, color: colors.navy800, flex: 1 },
   footer: {
     padding: spacing.lg,
     borderTopWidth: 1,

@@ -1,5 +1,7 @@
 export type FareClassId = 'standard' | 'plus' | 'premier';
 
+export type TripType = 'oneway' | 'roundtrip';
+
 export interface Station {
   id: string;
   code: string;
@@ -9,6 +11,13 @@ export interface Station {
   countryCode: string;
   lat: number;
   lng: number;
+  /**
+   * Eurostar.com's own numeric station id, used only to build the
+   * outbound deep-link URL on checkout (see services/eurostarLink.ts).
+   * Captured by hand from eurostar.com search results — there is no
+   * public station-lookup API to pull this from live.
+   */
+  eurostarId: string;
 }
 
 export interface FareClassInfo {
@@ -46,6 +55,14 @@ export interface Journey {
   durationMinutes: number;
   direct: boolean;
   fares: FarePrice[];
+  /**
+   * Set when this journey's date/time came from Eurostar's real open
+   * GTFS feed (see liveScheduleService.ts) rather than the synthetic
+   * generator. Fares are still modelled either way — see buildFares.
+   */
+  live?: boolean;
+  /** Minutes of delay reported by GTFS-RT at fetch time, live journeys only. */
+  delayMinutes?: number;
 }
 
 export interface DayPrice {
@@ -67,7 +84,9 @@ export interface PassengerCounts {
 export interface SearchCriteria {
   originId: string;
   destinationId: string;
-  date: string; // ISO yyyy-mm-dd
+  date: string; // ISO yyyy-mm-dd — outbound date
+  tripType: TripType;
+  returnDate: string | null; // ISO yyyy-mm-dd — only meaningful when tripType is 'roundtrip'
   passengers: PassengerCounts;
   wheelchairUser: boolean;
 }
@@ -79,21 +98,3 @@ export interface SelectedFare {
 }
 
 export type TravelReason = 'business' | 'holiday' | 'family_friends';
-
-export type PaymentMethodId = 'card' | 'apple_pay' | 'paypal';
-
-export interface PassengerDetails {
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone: string;
-}
-
-export interface BookingConfirmation {
-  pnr: string;
-  createdAt: string;
-  selection: SelectedFare;
-  passenger: PassengerDetails;
-  totalPaid: number;
-  currency: string;
-}

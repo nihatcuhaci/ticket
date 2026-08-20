@@ -142,12 +142,20 @@ export const ROUTES: RouteDefinition[] = [
   },
 ];
 
-export const findRoute = (originId: string, destinationId: string): RouteDefinition | undefined =>
-  ROUTES.find(
+export const findRoute = (originId: string, destinationId: string): RouteDefinition | undefined => {
+  const stored = ROUTES.find(
     (r) =>
       (r.originId === originId && r.destinationId === destinationId) ||
       (r.originId === destinationId && r.destinationId === originId)
   );
+  if (!stored) return undefined;
+  if (stored.originId === originId && stored.destinationId === destinationId) return stored;
+  // Routes are stored once per pair; durations/fares are symmetric (see
+  // file header), so orient a copy to match the direction actually
+  // requested (this matters for the return leg of a round trip, and for
+  // building a correctly-directed Journey/deep-link either way).
+  return { ...stored, originId, destinationId };
+};
 
 /** All destination ids reachable from a given origin (either direction). */
 export const reachableDestinations = (originId: string): string[] => {

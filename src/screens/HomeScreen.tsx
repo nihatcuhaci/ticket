@@ -18,6 +18,8 @@ import { DatePickerModal } from '../components/DatePickerModal';
 import { useAppState } from '../state/AppState';
 import { stationById } from '../data/stations';
 import { findRoute } from '../data/routes';
+import { isoDateAddDays } from '../services/journeyGenerator';
+import { TripType } from '../types';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Home'>;
 
@@ -35,22 +37,51 @@ const PROMO_ROUTES = [
   { originId: 'par', destinationId: 'cgn', label: 'Paris → Köln', from: 35 },
 ];
 
+const TRIP_TYPES: { id: TripType; label: string }[] = [
+  { id: 'oneway', label: 'Tek yön' },
+  { id: 'roundtrip', label: 'Gidiş - dönüş' },
+];
+
+const DEFAULT_TRIP_LENGTH_DAYS = 3;
+
 export default function HomeScreen({ navigation }: Props) {
   const { criteria, setCriteria } = useAppState();
   const [pickerOpen, setPickerOpen] = useState<'origin' | 'destination' | null>(null);
-  const [dateOpen, setDateOpen] = useState(false);
+  const [dateOpen, setDateOpen] = useState<'outbound' | 'return' | null>(null);
   const [passengerOpen, setPassengerOpen] = useState(false);
 
   const origin = stationById(criteria.originId);
   const destination = stationById(criteria.destinationId);
   const routeExists = !!findRoute(criteria.originId, criteria.destinationId);
   const totalPassengers = Object.values(criteria.passengers).reduce((a, b) => a + b, 0);
+  const isRoundTrip = criteria.tripType === 'roundtrip';
 
   const swap = () =>
     setCriteria((c) => ({ ...c, originId: c.destinationId, destinationId: c.originId }));
 
+  const setTripType = (tripType: TripType) => {
+    setCriteria((c) => {
+      if (tripType === 'roundtrip' && (!c.returnDate || c.returnDate <= c.date)) {
+        return { ...c, tripType, returnDate: isoDateAddDays(c.date, DEFAULT_TRIP_LENGTH_DAYS) };
+      }
+      return { ...c, tripType };
+    });
+  };
+
+  const selectOutboundDate = (date: string) => {
+    setCriteria((c) => {
+      const next = { ...c, date };
+      // Keep the return date valid if it would now fall on/before the new outbound date.
+      if (c.tripType === 'roundtrip' && c.returnDate && c.returnDate <= date) {
+        next.returnDate = isoDateAddDays(date, DEFAULT_TRIP_LENGTH_DAYS);
+      }
+      return next;
+    });
+  };
+
   const search = () => {
     if (!routeExists) return;
+    if (isRoundTrip && !criteria.returnDate) return;
     navigation.navigate('Results');
   };
 
@@ -63,6 +94,28 @@ export default function HomeScreen({ navigation }: Props) {
         </View>
 
         <View style={styles.searchCard}>
+          <View style={styles.tripTypeRow}>
+            {TRIP_TYPES.map((t) => (
+              <Pressable
+                key={t.id}
+                onPress={() => setTripType(t.id)}
+                style={[styles.tripTypeChip, criteria.tripType === t.id && styles.tripTypeChipSelected]}
+                accessibilityRole="button"
+                accessibilityState={{ selected: criteria.tripType === t.id }}
+                accessibilityLabel={`${t.label} seçeneğini seç`}
+              >
+                <Text
+                  style={[
+                    styles.tripTypeLabel,
+                    criteria.tripType === t.id && styles.tripTypeLabelSelected,
+                  ]}
+                >
+                  {t.label}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+
           <Pressable
             style={styles.field}
             onPress={() => setPickerOpen('origin')}
@@ -104,19 +157,51 @@ export default function HomeScreen({ navigation }: Props) {
           <View style={styles.rowFields}>
             <Pressable
               style={[styles.field, styles.halfField]}
-              onPress={() => setDateOpen(true)}
+              onPress={() => setDateOpen('outbound')}
               accessibilityRole="button"
-              accessibilityLabel="Tarih seç"
+              accessibilityLabel="Gidiş tarihini seç"
             >
               <Ionicons name="calendar-outline" size={16} color={colors.navy700} />
               <View style={{ flex: 1 }}>
-                <Text style={styles.fieldLabel}>Tarih</Text>
+                <Text style={styles.fieldLabel}>{isRoundTrip ? 'Gidiş' : 'Tarih'}</Text>
                 <Text style={styles.fieldValue}>{formatDate(criteria.date)}</Text>
               </View>
             </Pressable>
 
+            {isRoundTrip ? (
+              <Pressable
+                style={[styles.field, styles.halfField]}
+                onPress={() => setDateOpen('return')}
+                accessibilityRole="button"
+                accessibilityLabel="Dönüş tarihini seç"
+              >
+                <Ionicons name="calendar-outline" size={16} color={colors.navy700} />
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.fieldLabel}>Dönüş</Text>
+                  <Text style={styles.fieldValue}>
+                    {criteria.returnDate ? formatDate(criteria.returnDate) : 'Tarih seçin'}
+                  </Text>
+                </View>
+              </Pressable>
+            ) : (
+              <Pressable
+                style={[styles.field, styles.halfField]}
+                onPress={() => setPassengerOpen(true)}
+                accessibilityRole="button"
+                accessibilityLabel="Yolcu sayısını düzenle"
+              >
+                <Ionicons name="people-outline" size={16} color={colors.navy700} />
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.fieldLabel}>Yolcu</Text>
+                  <Text style={styles.fieldValue}>{totalPassengers} yolcu</Text>
+                </View>
+              </Pressable>
+            )}
+          </View>
+
+          {isRoundTrip && (
             <Pressable
-              style={[styles.field, styles.halfField]}
+              style={styles.field}
               onPress={() => setPassengerOpen(true)}
               accessibilityRole="button"
               accessibilityLabel="Yolcu sayısını düzenle"
@@ -127,7 +212,7 @@ export default function HomeScreen({ navigation }: Props) {
                 <Text style={styles.fieldValue}>{totalPassengers} yolcu</Text>
               </View>
             </Pressable>
-          </View>
+          )}
 
           {!routeExists && (
             <View style={styles.warning}>
@@ -183,10 +268,19 @@ export default function HomeScreen({ navigation }: Props) {
         onSelect={(s) => setCriteria((c) => ({ ...c, destinationId: s.id }))}
       />
       <DatePickerModal
-        visible={dateOpen}
-        onClose={() => setDateOpen(false)}
+        visible={dateOpen === 'outbound'}
+        onClose={() => setDateOpen(null)}
         value={criteria.date}
-        onSelect={(date) => setCriteria((c) => ({ ...c, date }))}
+        onSelect={selectOutboundDate}
+        title="Gidiş tarihi seçin"
+      />
+      <DatePickerModal
+        visible={dateOpen === 'return'}
+        onClose={() => setDateOpen(null)}
+        value={criteria.returnDate ?? criteria.date}
+        onSelect={(returnDate) => setCriteria((c) => ({ ...c, returnDate }))}
+        minDateISO={criteria.date}
+        title="Dönüş tarihi seçin"
       />
       <PassengerPickerModal
         visible={passengerOpen}
@@ -212,6 +306,18 @@ const styles = StyleSheet.create({
     borderRadius: radius.xl,
     padding: spacing.lg,
   },
+  tripTypeRow: { flexDirection: 'row', gap: spacing.xs, paddingTop: spacing.sm, paddingBottom: spacing.xs },
+  tripTypeChip: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: 7,
+    borderRadius: radius.pill,
+    backgroundColor: colors.offWhite,
+    borderWidth: 1,
+    borderColor: colors.gray200,
+  },
+  tripTypeChipSelected: { backgroundColor: colors.navy800, borderColor: colors.navy800 },
+  tripTypeLabel: { ...typography.captionStrong, color: colors.navy700 },
+  tripTypeLabelSelected: { color: colors.white },
   field: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -223,7 +329,7 @@ const styles = StyleSheet.create({
   swapBtn: {
     position: 'absolute',
     right: spacing.md,
-    top: 46,
+    top: 90,
     width: 32,
     height: 32,
     borderRadius: radius.pill,

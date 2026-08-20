@@ -1,0 +1,84 @@
+name: Refresh live schedules
+
+# Keeps live-schedules.json fresh by re-running the GTFS fetch/parse
+# pipeline (scripts/fetch-live-schedules.mjs) on a schedule and publishing
+# the result to a dedicated `data` branch as a single rolling commit —
+# served straight from raw.githubusercontent.com, no hosting account and
+# no manual deploy step required. See README -> APIs & Data Strategy /
+# Architecture for the full picture, and this repo's Actions tab to watch
+# it run.
+#
+# Nothing here touches the app itself or the `main` branch: this is a
+# separate, best-effort background job. If a run fails (e.g. Eurostar's
+# feed is briefly down), the app keeps working — it just falls back to
+# the fully-synthetic journey generator, exactly as it does today when
+# there's no network at all. See src/services/liveScheduleService.ts.
+
+on:
+  schedule:
+    - cron: '*/15 * * * *'
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: refresh-schedules
+  cancel-in-progress: true
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run parser unit tests
+        run: node --test scripts/fetch-live-schedules.test.mjs
+
+      - name: Fetch + parse live GTFS schedules
+        run: node scripts/fetch-live-schedules.mjs
+
+      - name: Verify output was written
+        run: test -s live-schedules.json
+
+      - name: Publish to data branch (single rolling commit)
+        run: |
+          set -euo pipefail
+          git config user.name "eurotrain-bot"
+          git config user.email "actions@users.noreply.github.com"
+
+          # Build a brand-new, parentless commit containing exactly this
+          # one file, straight from git plumbing — no checkout of the
+          # `data` branch needed, so this can't collide with anything in
+          # the main checkout, and the branch never accumulates history:
+          # every run replaces the branch tip outright.
+          BLOB=$(git hash-object -w live-schedules.json)
+          TREE=$(printf '100644 blob %s\tlive-schedules.json\n' "$BLOB" | git mktree)
+
+          # Skip the push if nothing actually changed since the last run
+          # (same content -> same tree hash), so the branch/API history
+          # stays meaningful instead of churning every 15 minutes.
+          git fetch origin data:refs/remotes/origin/data 2>/dev/null || true
+          if git rev-parse --verify --quiet refs/remotes/origin/data >/dev/null; then
+            PREV_TREE=$(git rev-parse "refs/remotes/origin/data^{tree}")
+            if [ "$PREV_TREE" = "$TREE" ]; then
+              echo "No change in live-schedules.json content, skipping push."
+              exit 0
+            fi
+          fi
+
+          COMMIT=$(git commit-tree "$TREE" -m "Refresh live schedules $(date -u +%Y-%m-%dT%H:%M:%SZ)")
+          git push --force origin "$COMMIT:refs/heads/data"
+          echo "Published: https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/data/live-schedules.json"

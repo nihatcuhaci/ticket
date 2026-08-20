@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
+  Pressable,
   StyleSheet,
   Text,
   View,
@@ -14,7 +15,8 @@ import { colors, radius, spacing, typography } from '../theme';
 import { useAppState } from '../state/AppState';
 import { stationById } from '../data/stations';
 import { findRoute } from '../data/routes';
-import { generateJourneys } from '../services/journeyGenerator';
+import { generateJourneys, todayISO } from '../services/journeyGenerator';
+import { getLiveJourneys, getLiveScheduleFreshness } from '../services/liveScheduleService';
 import { FareClassId, Journey } from '../types';
 import { DateStrip } from '../components/DateStrip';
 import { JourneyCard } from '../components/JourneyCard';
@@ -25,11 +27,22 @@ import { useExchangeRates } from '../hooks/useExchangeRates';
 import { CurrencyCode, convert, formatCurrency } from '../services/currencyService';
 import { fareClassById } from '../data/fareClasses';
 
+/** "3 dk önce" / "2 sa önce" — coarse relative freshness label for the live-schedule badge. */
+function relativeFreshness(iso: string): string {
+  const minutes = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60000));
+  if (minutes < 1) return 'az önce';
+  if (minutes < 60) return `${minutes} dk önce`;
+  const hours = Math.round(minutes / 60);
+  return `${hours} sa önce`;
+}
+
 type Props = NativeStackScreenProps<RootStackParamList, 'Results'>;
 type LoadState = 'loading' | 'ready' | 'error';
+type Leg = 'outbound' | 'return';
 
 export default function ResultsScreen({ navigation }: Props) {
-  const { criteria, setCriteria, selection, setSelection } = useAppState();
+  const { criteria, setCriteria, selection, setSelection, returnSelection, setReturnSelection } =
+    useAppState();
   const { rates, loading: ratesLoading } = useExchangeRates();
   const [currency, setCurrency] = useState<CurrencyCode>('EUR');
   const [loadState, setLoadState] = useState<LoadState>('loading');
@@ -37,12 +50,29 @@ export default function ResultsScreen({ navigation }: Props) {
   const [conditionsFor, setConditionsFor] = useState<FareClassId | null>(null);
   const [pendingFareJourney, setPendingFareJourney] = useState<Journey | null>(null);
   const [reloadTick, setReloadTick] = useState(0);
+  const [leg, setLeg] = useState<Leg>('outbound');
+  const [liveFreshness, setLiveFreshness] = useState<{ generatedAt: string } | null>(null);
+  const [hasLiveJourneys, setHasLiveJourneys] = useState(false);
 
-  const origin = stationById(criteria.originId);
-  const destination = stationById(criteria.destinationId);
+  const isRoundTrip = criteria.tripType === 'roundtrip';
+
+  // Everything below is scoped to whichever leg is currently being shopped
+  // — outbound origin->destination, or (for a round trip's second step)
+  // the reverse direction on the return date. Same screen, same
+  // components, just re-pointed at a different origin/destination/date —
+  // this mirrors the Outbound -> Return step pattern observed on the real
+  // eurostar.com booking flow.
+  const legOriginId = leg === 'outbound' ? criteria.originId : criteria.destinationId;
+  const legDestinationId = leg === 'outbound' ? criteria.destinationId : criteria.originId;
+  const legDate = leg === 'outbound' ? criteria.date : criteria.returnDate ?? criteria.date;
+  const currentSelection = leg === 'outbound' ? selection : returnSelection;
+  const setCurrentSelection = leg === 'outbound' ? setSelection : setReturnSelection;
+
+  const origin = stationById(legOriginId);
+  const destination = stationById(legDestinationId);
   const route = useMemo(
-    () => findRoute(criteria.originId, criteria.destinationId),
-    [criteria.originId, criteria.destinationId]
+    () => findRoute(legOriginId, legDestinationId),
+    [legOriginId, legDestinationId]
   );
 
   useEffect(() => {
@@ -50,27 +80,70 @@ export default function ResultsScreen({ navigation }: Props) {
       setLoadState('error');
       return;
     }
+    let cancelled = false;
     setLoadState('loading');
-    setSelection(null);
     const timer = setTimeout(() => {
       // Deterministic, occasional simulated network failure so the error
       // state is reachable in a demo rather than only existing on paper.
-      const failureSeed = `${criteria.originId}${criteria.destinationId}${criteria.date}${reloadTick}`;
+      const failureSeed = `${legOriginId}${legDestinationId}${legDate}${reloadTick}`;
       const shouldFail = reloadTick === 0 && failureSeed.length % 17 === 0;
       if (shouldFail) {
         setLoadState('error');
         return;
       }
-      setJourneys(generateJourneys(route, criteria.date));
-      setLoadState('ready');
+      // Try Eurostar's real GTFS-sourced departures first; fall back to
+      // the synthetic generator when there's no live coverage for this
+      // route/date (unreachable feed, placeholder repo not yet
+      // configured, or a connection this feed doesn't model — see
+      // liveScheduleService.ts).
+      getLiveJourneys(route, legDate).then((live) => {
+        if (cancelled) return;
+        const usingLive = !!live && live.length > 0;
+        setHasLiveJourneys(usingLive);
+        setJourneys(usingLive ? (live as Journey[]) : generateJourneys(route, legDate));
+        setLoadState('ready');
+      });
     }, 650);
-    return () => clearTimeout(timer);
-  }, [route, criteria.originId, criteria.destinationId, criteria.date, reloadTick]);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [route, legOriginId, legDestinationId, legDate, reloadTick]);
+
+  useEffect(() => {
+    let cancelled = false;
+    getLiveScheduleFreshness().then((f) => {
+      if (!cancelled) setLiveFreshness(f);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const handleSelectFare = (journey: Journey, fareClassId: FareClassId) => {
     const fare = journey.fares.find((f) => f.classId === fareClassId);
     if (!fare || fare.price === null) return;
-    setSelection({ journey, fareClassId, price: fare.price });
+    setCurrentSelection({ journey, fareClassId, price: fare.price });
+  };
+
+  const handleDateSelect = (date: string) => {
+    // The previously selected journey's id won't exist in the regenerated
+    // list for a different date, so clear this leg's selection rather
+    // than leave the summary bar pointing at a stale fare.
+    setCurrentSelection(null);
+    if (leg === 'outbound') {
+      setCriteria((c) => ({ ...c, date }));
+    } else {
+      setCriteria((c) => ({ ...c, returnDate: date }));
+    }
+  };
+
+  const handleContinue = () => {
+    if (isRoundTrip && leg === 'outbound') {
+      setLeg('return');
+      return;
+    }
+    navigation.navigate('Checkout');
   };
 
   const priceLabel = (amountEUR: number) =>
@@ -80,26 +153,52 @@ export default function ResultsScreen({ navigation }: Props) {
     <SafeAreaView style={styles.safe} edges={['top']}>
       <View style={styles.header}>
         <View style={styles.headerTop}>
-          <Text style={styles.route}>
-            {origin?.city} → {destination?.city}
-          </Text>
+          <View style={{ flex: 1 }}>
+            {isRoundTrip && (
+              <Text style={styles.legLabel}>
+                {leg === 'outbound' ? '1. Gidiş' : '2. Dönüş'}
+              </Text>
+            )}
+            <Text style={styles.route}>
+              {origin?.city} → {destination?.city}
+            </Text>
+          </View>
           <SecondaryButton label="Düzenle" onPress={() => navigation.goBack()} style={styles.editBtn} />
         </View>
+        {isRoundTrip && leg === 'return' && (
+          <Pressable
+            onPress={() => setLeg('outbound')}
+            style={styles.backLink}
+            accessibilityRole="button"
+            accessibilityLabel="Gidiş seçimini düzenle"
+          >
+            <Ionicons name="arrow-back" size={14} color={colors.navy700} />
+            <Text style={styles.backLinkText}>Gidiş seçimini düzenle</Text>
+          </Pressable>
+        )}
         <CurrencyToggle
           value={currency}
           onChange={setCurrency}
           freshness={ratesLoading ? null : rates?.source ?? null}
         />
+        {loadState === 'ready' && (
+          <Text style={styles.scheduleFreshness}>
+            {hasLiveJourneys && liveFreshness
+              ? `● Canlı sefer verisi · ${relativeFreshness(liveFreshness.generatedAt)} güncellendi`
+              : '● Sefer saatleri örnek veridir (bkz. README)'}
+          </Text>
+        )}
       </View>
 
       {route && (
         <View style={styles.dateStripWrap}>
           <DateStrip
             route={route}
-            selectedDate={criteria.date}
-            onSelect={(date) => setCriteria((c) => ({ ...c, date }))}
+            selectedDate={legDate}
+            onSelect={handleDateSelect}
             currency={currency}
             rates={rates}
+            minDateISO={leg === 'return' ? criteria.date : todayISO()}
           />
         </View>
       )}
@@ -146,7 +245,9 @@ export default function ResultsScreen({ navigation }: Props) {
               journey={item}
               currency={currency}
               rates={rates}
-              selectedFareClassId={selection?.journey.id === item.id ? selection.fareClassId : undefined}
+              selectedFareClassId={
+                currentSelection?.journey.id === item.id ? currentSelection.fareClassId : undefined
+              }
               onSelectFare={(fareClassId) => handleSelectFare(item, fareClassId)}
               onShowConditions={(fareClassId) => {
                 setPendingFareJourney(item);
@@ -157,17 +258,18 @@ export default function ResultsScreen({ navigation }: Props) {
         />
       )}
 
-      {selection && (
+      {currentSelection && (
         <View style={styles.summaryBar}>
           <View style={{ flex: 1 }}>
             <Text style={styles.summaryLabel}>
-              {selection.journey.departureTime} · {fareClassById(selection.fareClassId)?.shortLabel}
+              {currentSelection.journey.departureTime} ·{' '}
+              {fareClassById(currentSelection.fareClassId)?.shortLabel}
             </Text>
-            <Text style={styles.summaryPrice}>{priceLabel(selection.price)}</Text>
+            <Text style={styles.summaryPrice}>{priceLabel(currentSelection.price)}</Text>
           </View>
           <PrimaryButton
-            label="Devam et"
-            onPress={() => navigation.navigate('Checkout')}
+            label={isRoundTrip && leg === 'outbound' ? 'Dönüş seç' : 'Devam et'}
+            onPress={handleContinue}
             style={{ minWidth: 140 }}
           />
         </View>
@@ -199,8 +301,12 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   headerTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  legLabel: { ...typography.tiny, color: colors.teal500, textTransform: 'uppercase', marginBottom: 2 },
   route: { ...typography.h3, color: colors.navy900 },
   editBtn: { paddingVertical: 6, paddingHorizontal: spacing.md },
+  backLink: { flexDirection: 'row', alignItems: 'center', gap: 4, alignSelf: 'flex-start' },
+  backLinkText: { ...typography.captionStrong, color: colors.navy700, textDecorationLine: 'underline' },
+  scheduleFreshness: { ...typography.tiny, color: colors.gray400 },
   dateStripWrap: { backgroundColor: colors.white, paddingBottom: spacing.md },
   list: { padding: spacing.lg, paddingBottom: 140 },
   centerState: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: spacing.xxl, gap: spacing.xs },

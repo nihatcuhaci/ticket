@@ -26,10 +26,16 @@ export const JourneyCard: React.FC<{
     <View style={styles.card}>
       <View style={styles.timeRow}>
         <View>
-          <Text style={styles.time}>{journey.departureTime}</Text>
+          <View style={styles.timeAndBadge}>
+            <Text style={styles.time}>{journey.departureTime}</Text>
+            {journey.live && <Badge label="Canlı" tone="teal" />}
+          </View>
           <Text style={styles.station}>{journey.durationMinutes >= 60
             ? `${Math.floor(journey.durationMinutes / 60)}sa ${journey.durationMinutes % 60}dk`
             : `${journey.durationMinutes}dk`}</Text>
+          {journey.live && (journey.delayMinutes ?? 0) > 0 && (
+            <Text style={styles.delayText}>+{journey.delayMinutes} dk gecikme bildirildi</Text>
+          )}
         </View>
         <View style={styles.timeline}>
           <View style={styles.timelineDot} />
@@ -110,8 +116,10 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   timeRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  timeAndBadge: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   time: { ...typography.h3, color: colors.navy900 },
   station: { ...typography.caption, color: colors.gray600, marginTop: 2 },
+  delayText: { ...typography.tiny, color: colors.warning, marginTop: 2 },
   timeline: { flex: 1, flexDirection: 'row', alignItems: 'center', marginHorizontal: spacing.sm, gap: 2 },
   timelineDot: { width: 5, height: 5, borderRadius: 3, backgroundColor: colors.gray400 },
   timelineLine: { flex: 1, height: 1, backgroundColor: colors.gray200 },

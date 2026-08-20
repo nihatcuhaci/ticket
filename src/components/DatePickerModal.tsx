@@ -14,14 +14,19 @@ export const DatePickerModal: React.FC<{
   onClose: () => void;
   value: string;
   onSelect: (date: string) => void;
-}> = ({ visible, onClose, value, onSelect }) => {
+  /** Earliest selectable date (ISO). Defaults to today — pass the outbound
+   * date here when picking a return date, so a round trip can't end up
+   * with a return before its outbound leg. */
+  minDateISO?: string;
+  title?: string;
+}> = ({ visible, onClose, value, onSelect, minDateISO, title = 'Tarih seçin' }) => {
   const days = useMemo(() => {
-    const today = todayISO();
-    return Array.from({ length: 120 }, (_, i) => isoDateAddDays(today, i));
-  }, []);
+    const start = minDateISO && minDateISO > todayISO() ? minDateISO : todayISO();
+    return Array.from({ length: 120 }, (_, i) => isoDateAddDays(start, i));
+  }, [minDateISO]);
 
   return (
-    <BottomModal visible={visible} onClose={onClose} title="Tarih seçin">
+    <BottomModal visible={visible} onClose={onClose} title={title}>
       <FlatList
         data={days}
         keyExtractor={(d) => d}

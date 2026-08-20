@@ -1,5 +1,5 @@
-import React from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import React, { useState } from 'react';
+import { Alert, Linking, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -9,28 +9,66 @@ import { useAppState } from '../state/AppState';
 import { stationById } from '../data/stations';
 import { fareClassById } from '../data/fareClasses';
 import { PrimaryButton, SecondaryButton } from '../components/ui';
+import { buildEurostarSearchUrl } from '../services/eurostarLink';
+import { SelectedFare } from '../types';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Confirmation'>;
 
-export default function ConfirmationScreen({ navigation }: Props) {
-  const { confirmation, resetBooking } = useAppState();
+const LegCard: React.FC<{ label?: string; leg: SelectedFare }> = ({ label, leg }) => {
+  const origin = stationById(leg.journey.originId);
+  const destination = stationById(leg.journey.destinationId);
+  const fareClass = fareClassById(leg.fareClassId);
+  return (
+    <View style={styles.card}>
+      {label && <Text style={styles.cardLegLabel}>{label}</Text>}
+      <Text style={styles.route}>
+        {origin?.city} → {destination?.city}
+      </Text>
+      <Text style={styles.detail}>
+        {leg.journey.date} · {leg.journey.departureTime} - {leg.journey.arrivalTime}
+      </Text>
+      <View style={styles.divider} />
+      <Row label="Sınıf" value={fareClass?.label ?? ''} />
+      <Row label="Bu uygulamadaki tahmini fiyat" value={`€${leg.price}`} />
+    </View>
+  );
+};
 
-  if (!confirmation) {
+export default function ConfirmationScreen({ navigation }: Props) {
+  const { criteria, selection, returnSelection, resetBooking } = useAppState();
+  const [reopening, setReopening] = useState(false);
+  const isRoundTrip = criteria.tripType === 'roundtrip';
+
+  if (!selection) {
     return (
       <SafeAreaView style={styles.safe}>
         <View style={styles.center}>
-          <Text style={typography.body as any}>Rezervasyon bulunamadı.</Text>
+          <Text style={typography.body as any}>Seçili bir sefer bulunamadı.</Text>
         </View>
       </SafeAreaView>
     );
   }
 
-  const { selection, passenger, pnr, totalPaid, currency } = confirmation;
-  const origin = stationById(selection.journey.originId);
-  const destination = stationById(selection.journey.destinationId);
-  const fareClass = fareClassById(selection.fareClassId);
+  const reopenEurostar = async () => {
+    const url = buildEurostarSearchUrl(
+      selection.journey.originId,
+      selection.journey.destinationId,
+      selection.journey.date,
+      criteria.passengers,
+      isRoundTrip ? returnSelection?.journey.date : null
+    );
+    if (!url) return;
+    setReopening(true);
+    try {
+      await Linking.openURL(url);
+    } catch (e) {
+      Alert.alert('Açılamadı', 'eurostar.com şu anda açılamadı. Lütfen tekrar deneyin.');
+    } finally {
+      setReopening(false);
+    }
+  };
 
-  const goHome = () => {
+  const startNewSearch = () => {
     resetBooking();
     navigation.reset({ index: 0, routes: [{ name: 'Home' }] });
   };
@@ -39,38 +77,27 @@ export default function ConfirmationScreen({ navigation }: Props) {
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
       <ScrollView contentContainerStyle={styles.scroll}>
         <View style={styles.iconWrap}>
-          <Ionicons name="checkmark-circle" size={64} color={colors.teal500} />
+          <Ionicons name="open-outline" size={64} color={colors.teal500} />
         </View>
-        <Text style={styles.title}>Rezervasyonunuz onaylandı</Text>
-        <Text style={styles.subtitle}>Bilet detayları {passenger.email || 'e-posta adresinize'} gönderildi.</Text>
+        <Text style={styles.title}>Eurostar.com'a yönlendirildiniz</Text>
+        <Text style={styles.subtitle}>
+          Güncel fiyatı ve koltuk uygunluğunu görüp satın alma işlemini eurostar.com'da tamamlayabilirsiniz.
+        </Text>
 
-        <View style={styles.pnrCard}>
-          <Text style={styles.pnrLabel}>Rezervasyon kodu (PNR)</Text>
-          <Text style={styles.pnr}>{pnr}</Text>
-        </View>
-
-        <View style={styles.card}>
-          <Text style={styles.route}>
-            {origin?.city} → {destination?.city}
-          </Text>
-          <Text style={styles.detail}>
-            {selection.journey.date} · {selection.journey.departureTime} - {selection.journey.arrivalTime}
-          </Text>
-          <View style={styles.divider} />
-          <Row label="Yolcu" value={`${passenger.firstName} ${passenger.lastName}`} />
-          <Row label="Sınıf" value={fareClass?.label ?? ''} />
-          <Row label="Ödenen tutar" value={`€${totalPaid} (${currency})`} />
-        </View>
+        <LegCard label={isRoundTrip ? 'Gidiş' : undefined} leg={selection} />
+        {isRoundTrip && returnSelection && <LegCard label="Dönüş" leg={returnSelection} />}
 
         <View style={styles.infoCard}>
           <Ionicons name="information-circle-outline" size={18} color={colors.navy700} />
           <Text style={styles.infoText}>
-            Bu bir demo rezervasyondur, gerçek bir bilet oluşturulmadı ve ödeme alınmadı.
+            EuroTrain herhangi bir ödeme almadı veya bilet oluşturmadı. Satın alma, açılan sekmede
+            Eurostar'ın kendi sitesinde gerçekleşir.
           </Text>
         </View>
       </ScrollView>
       <View style={styles.footer}>
-        <PrimaryButton label="Ana sayfaya dön" onPress={goHome} />
+        <SecondaryButton label="Eurostar.com'u tekrar aç" onPress={reopenEurostar} loading={reopening} />
+        <PrimaryButton label="Yeni arama yap" onPress={startNewSearch} style={{ marginTop: spacing.sm }} />
       </View>
     </SafeAreaView>
   );
@@ -89,15 +116,6 @@ const styles = StyleSheet.create({
   iconWrap: { alignItems: 'center', marginTop: spacing.xl, marginBottom: spacing.md },
   title: { ...typography.h2, color: colors.navy900, textAlign: 'center' },
   subtitle: { ...typography.body, color: colors.gray600, textAlign: 'center', marginTop: spacing.xs, marginBottom: spacing.xl },
-  pnrCard: {
-    backgroundColor: colors.navy900,
-    borderRadius: radius.lg,
-    padding: spacing.lg,
-    alignItems: 'center',
-    marginBottom: spacing.lg,
-  },
-  pnrLabel: { ...typography.caption, color: colors.gray200 },
-  pnr: { ...typography.h1, color: colors.amber500, letterSpacing: 4, marginTop: 4 },
   card: {
     backgroundColor: colors.white,
     borderRadius: radius.lg,
@@ -105,6 +123,12 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.gray200,
     marginBottom: spacing.lg,
+  },
+  cardLegLabel: {
+    ...typography.tiny,
+    color: colors.teal500,
+    textTransform: 'uppercase',
+    marginBottom: 4,
   },
   route: { ...typography.h3, color: colors.navy900 },
   detail: { ...typography.caption, color: colors.gray600, marginTop: 2 },

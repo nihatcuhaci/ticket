@@ -1,11 +1,5 @@
 import React, { createContext, useContext, useMemo, useState } from 'react';
-import {
-  BookingConfirmation,
-  PassengerCounts,
-  PassengerDetails,
-  SearchCriteria,
-  SelectedFare,
-} from '../types';
+import { PassengerCounts, SearchCriteria, SelectedFare } from '../types';
 import { todayISO } from '../services/journeyGenerator';
 
 const DEFAULT_PASSENGERS: PassengerCounts = { adult: 1, youth: 0, child: 0, senior: 0, infant: 0 };
@@ -14,6 +8,8 @@ export const DEFAULT_CRITERIA: SearchCriteria = {
   originId: 'lon',
   destinationId: 'par',
   date: todayISO(),
+  tripType: 'oneway',
+  returnDate: null,
   passengers: DEFAULT_PASSENGERS,
   wheelchairUser: false,
 };
@@ -21,29 +17,25 @@ export const DEFAULT_CRITERIA: SearchCriteria = {
 interface AppStateShape {
   criteria: SearchCriteria;
   setCriteria: React.Dispatch<React.SetStateAction<SearchCriteria>>;
+  /** Outbound-leg fare selection (the only leg for a one-way search). */
   selection: SelectedFare | null;
   setSelection: (s: SelectedFare | null) => void;
-  passenger: PassengerDetails;
-  setPassenger: (p: PassengerDetails) => void;
-  confirmation: BookingConfirmation | null;
-  setConfirmation: (c: BookingConfirmation | null) => void;
+  /** Return-leg fare selection — only used when criteria.tripType is 'roundtrip'. */
+  returnSelection: SelectedFare | null;
+  setReturnSelection: (s: SelectedFare | null) => void;
   resetBooking: () => void;
 }
 
 const AppStateContext = createContext<AppStateShape | undefined>(undefined);
 
-const EMPTY_PASSENGER: PassengerDetails = { firstName: '', lastName: '', email: '', phone: '' };
-
 export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [criteria, setCriteria] = useState<SearchCriteria>(DEFAULT_CRITERIA);
   const [selection, setSelection] = useState<SelectedFare | null>(null);
-  const [passenger, setPassenger] = useState<PassengerDetails>(EMPTY_PASSENGER);
-  const [confirmation, setConfirmation] = useState<BookingConfirmation | null>(null);
+  const [returnSelection, setReturnSelection] = useState<SelectedFare | null>(null);
 
   const resetBooking = () => {
     setSelection(null);
-    setPassenger(EMPTY_PASSENGER);
-    setConfirmation(null);
+    setReturnSelection(null);
   };
 
   const value = useMemo(
@@ -52,13 +44,11 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       setCriteria,
       selection,
       setSelection,
-      passenger,
-      setPassenger,
-      confirmation,
-      setConfirmation,
+      returnSelection,
+      setReturnSelection,
       resetBooking,
     }),
-    [criteria, selection, passenger, confirmation]
+    [criteria, selection, returnSelection]
   );
 
   return <AppStateContext.Provider value={value}>{children}</AppStateContext.Provider>;

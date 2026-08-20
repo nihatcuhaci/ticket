@@ -75,7 +75,14 @@ function priceForSlot(route: RouteDefinition, dateISO: string, slot: string): nu
 const PLUS_MULTIPLIER = 1.28;
 const PREMIER_MULTIPLIER = 1.58;
 
-function buildFares(route: RouteDefinition, dateISO: string, slot: string): FarePrice[] {
+/**
+ * Exported so liveScheduleService.ts can price real GTFS-sourced departure
+ * times through the exact same deterministic engine as fully-synthetic
+ * ones — there's no live fares/inventory feed (see routes.ts), so a real
+ * departure time still needs a modelled price, and reusing this keeps
+ * live and synthetic journeys visually/behaviorally consistent.
+ */
+export function buildFares(route: RouteDefinition, dateISO: string, slot: string): FarePrice[] {
   const standardPrice = priceForSlot(route, dateISO, slot);
   const plusPrice = Math.round((standardPrice * PLUS_MULTIPLIER) / 1);
   const premierPrice = Math.round((standardPrice * PREMIER_MULTIPLIER) / 1);

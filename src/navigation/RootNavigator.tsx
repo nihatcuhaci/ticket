@@ -32,12 +32,12 @@ export default function RootNavigator() {
       >
         <Stack.Screen name="Home" component={HomeScreen} options={{ headerShown: false }} />
         <Stack.Screen name="Results" component={ResultsScreen} options={{ headerShown: false }} />
-        <Stack.Screen name="Checkout" component={CheckoutScreen} options={{ title: 'Ödeme' }} />
+        <Stack.Screen name="Checkout" component={CheckoutScreen} options={{ title: 'Özet' }} />
         <Stack.Screen
           name="Confirmation"
           component={ConfirmationScreen}
           options={{
-            title: 'Onay',
+            title: 'Yönlendirme',
             headerBackVisible: false,
             headerLeft: () => null,
             gestureEnabled: false,

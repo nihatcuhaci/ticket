@@ -21,6 +21,7 @@ export const STATIONS: Station[] = [
     countryCode: 'GB',
     lat: 51.5308,
     lng: -0.1257,
+    eurostarId: '7015400',
   },
   {
     id: 'par',
@@ -31,6 +32,7 @@ export const STATIONS: Station[] = [
     countryCode: 'FR',
     lat: 48.8809,
     lng: 2.3553,
+    eurostarId: '8727100',
   },
   {
     id: 'dlp',
@@ -41,6 +43,7 @@ export const STATIONS: Station[] = [
     countryCode: 'FR',
     lat: 48.8722,
     lng: 2.7828,
+    eurostarId: '8711184',
   },
   {
     id: 'bru',
@@ -51,6 +54,7 @@ export const STATIONS: Station[] = [
     countryCode: 'BE',
     lat: 50.8357,
     lng: 4.3358,
+    eurostarId: '8814001',
   },
   {
     id: 'ams',
@@ -61,6 +65,7 @@ export const STATIONS: Station[] = [
     countryCode: 'NL',
     lat: 52.3791,
     lng: 4.9003,
+    eurostarId: '8400058',
   },
   {
     id: 'rtd',
@@ -71,6 +76,7 @@ export const STATIONS: Station[] = [
     countryCode: 'NL',
     lat: 51.9244,
     lng: 4.4691,
+    eurostarId: '8400530',
   },
   {
     id: 'lil',
@@ -81,6 +87,7 @@ export const STATIONS: Station[] = [
     countryCode: 'FR',
     lat: 50.6395,
     lng: 3.0752,
+    eurostarId: '8722326',
   },
   {
     id: 'cgn',
@@ -91,6 +98,7 @@ export const STATIONS: Station[] = [
     countryCode: 'DE',
     lat: 50.9432,
     lng: 6.9583,
+    eurostarId: '8015458',
   },
   {
     id: 'brg',
@@ -101,6 +109,7 @@ export const STATIONS: Station[] = [
     countryCode: 'BE',
     lat: 51.1969,
     lng: 3.2167,
+    eurostarId: '8891009',
   },
 ];
 
