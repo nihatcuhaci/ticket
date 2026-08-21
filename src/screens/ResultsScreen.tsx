@@ -15,7 +15,7 @@ import { colors, radius, spacing, typography } from '../theme';
 import { useAppState } from '../state/AppState';
 import { stationById } from '../data/stations';
 import { findRoute } from '../data/routes';
-import { generateJourneys, todayISO } from '../services/journeyGenerator';
+import { generateJourneys, todayISO, filterPastJourneys } from '../services/journeyGenerator';
 import { getLiveJourneys, getLiveScheduleFreshness } from '../services/liveScheduleService';
 import { FareClassId, Journey } from '../types';
 import { DateStrip } from '../components/DateStrip';
@@ -98,9 +98,18 @@ export default function ResultsScreen({ navigation }: Props) {
       // liveScheduleService.ts).
       getLiveJourneys(route, legDate).then((live) => {
         if (cancelled) return;
-        const usingLive = !!live && live.length > 0;
+        // Filtered for "already departed today" before deciding whether
+        // there's anything live to show — a route with live coverage
+        // but only past-time departures left today should still fall
+        // back to the synthetic list (also filtered) rather than
+        // rendering an empty "no departures" state when later synthetic
+        // slots are perfectly valid.
+        const liveUpcoming = live ? filterPastJourneys(live, legDate) : [];
+        const usingLive = liveUpcoming.length > 0;
         setHasLiveJourneys(usingLive);
-        setJourneys(usingLive ? (live as Journey[]) : generateJourneys(route, legDate));
+        setJourneys(
+          usingLive ? liveUpcoming : filterPastJourneys(generateJourneys(route, legDate), legDate)
+        );
         setLoadState('ready');
       });
     }, 650);
@@ -228,9 +237,13 @@ export default function ResultsScreen({ navigation }: Props) {
       {loadState === 'ready' && journeys.length === 0 && (
         <View style={styles.centerState}>
           <Ionicons name="train-outline" size={40} color={colors.gray400} />
-          <Text style={styles.centerStateTitle}>Bu tarihte sefer yok</Text>
+          <Text style={styles.centerStateTitle}>
+            {legDate === todayISO() ? 'Bugün için kalan sefer yok' : 'Bu tarihte sefer yok'}
+          </Text>
           <Text style={styles.centerStateText}>
-            Farklı bir tarih deneyin veya tarih şeridinden başka bir günü seçin.
+            {legDate === todayISO()
+              ? 'Bugünkü tüm seferlerin saati geçti. Yarını veya başka bir günü deneyin.'
+              : 'Farklı bir tarih deneyin veya tarih şeridinden başka bir günü seçin.'}
           </Text>
         </View>
       )}

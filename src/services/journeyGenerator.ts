@@ -155,3 +155,16 @@ export function isoDateAddDays(dateISO: string, days: number): string {
 export function todayISO(): string {
   return new Date().toISOString().slice(0, 10);
 }
+
+/**
+ * Drops journeys that have already departed, when `dateISO` is today.
+ * You can't board a train that already left — showing it (live or
+ * synthetic) just invites a booking that's dead on arrival at
+ * checkout. Dates other than today are returned unchanged: every
+ * departure on a future day is, by definition, still ahead of "now".
+ */
+export function filterPastJourneys(journeys: Journey[], dateISO: string): Journey[] {
+  if (dateISO !== todayISO()) return journeys;
+  const nowHHMM = new Date().toTimeString().slice(0, 5); // "HH:MM", local time
+  return journeys.filter((j) => j.departureTime > nowHHMM);
+}

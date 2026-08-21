@@ -239,7 +239,13 @@ export default function HomeScreen({ navigation }: Props) {
               key={p.label}
               style={styles.promoCard}
               onPress={() => {
+                // Was only updating the search fields in the background
+                // with no navigation, so tapping a card looked like it
+                // did nothing. PROMO_ROUTES are curated from real routes
+                // (routes.ts), so no routeExists re-check is needed here
+                // the way the main "Sefer ara" button needs one.
                 setCriteria((c) => ({ ...c, originId: p.originId, destinationId: p.destinationId }));
+                navigation.navigate('Results');
               }}
               accessibilityRole="button"
             >
