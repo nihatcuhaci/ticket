@@ -3,11 +3,7 @@ import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { BottomModal } from './BottomModal';
 import { colors, radius, spacing, typography } from '../theme';
 import { isoDateAddDays, todayISO } from '../services/journeyGenerator';
-
-const WEEKDAYS = ['Paz', 'Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt'];
-const MONTHS = [
-  'Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz', 'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara',
-];
+import { useTranslation } from '../hooks/useTranslation';
 
 export const DatePickerModal: React.FC<{
   visible: boolean;
@@ -19,14 +15,15 @@ export const DatePickerModal: React.FC<{
    * with a return before its outbound leg. */
   minDateISO?: string;
   title?: string;
-}> = ({ visible, onClose, value, onSelect, minDateISO, title = 'Tarih seçin' }) => {
+}> = ({ visible, onClose, value, onSelect, minDateISO, title }) => {
+  const { t } = useTranslation();
   const days = useMemo(() => {
     const start = minDateISO && minDateISO > todayISO() ? minDateISO : todayISO();
     return Array.from({ length: 120 }, (_, i) => isoDateAddDays(start, i));
   }, [minDateISO]);
 
   return (
-    <BottomModal visible={visible} onClose={onClose} title={title}>
+    <BottomModal visible={visible} onClose={onClose} title={title ?? t.datePicker.defaultTitle}>
       <FlatList
         data={days}
         keyExtractor={(d) => d}
@@ -48,9 +45,9 @@ export const DatePickerModal: React.FC<{
               accessibilityRole="button"
             >
               <Text style={[styles.date, selected && styles.dateSelected]}>
-                {WEEKDAYS[d.getDay()]}, {d.getDate()} {MONTHS[d.getMonth()]}
+                {t.weekdaysShort[d.getDay()]}, {d.getDate()} {t.monthsShort[d.getMonth()]}
               </Text>
-              {selected && <Text style={styles.selectedTag}>Seçili</Text>}
+              {selected && <Text style={styles.selectedTag}>{t.common.selectedTag}</Text>}
             </Pressable>
           );
         }}

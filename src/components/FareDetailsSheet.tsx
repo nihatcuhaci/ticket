@@ -3,9 +3,10 @@ import { StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { BottomModal } from './BottomModal';
 import { FareClassId } from '../types';
-import { fareClassById } from '../data/fareClasses';
+import { getFareClassById } from '../data/fareClasses';
 import { colors, spacing, typography } from '../theme';
 import { PrimaryButton } from './ui';
+import { useTranslation } from '../hooks/useTranslation';
 
 export const FareDetailsSheet: React.FC<{
   visible: boolean;
@@ -13,7 +14,8 @@ export const FareDetailsSheet: React.FC<{
   fareClassId: FareClassId | null;
   onChooseThisFare?: () => void;
 }> = ({ visible, onClose, fareClassId, onChooseThisFare }) => {
-  const fareClass = fareClassId ? fareClassById(fareClassId) : undefined;
+  const { t, language } = useTranslation();
+  const fareClass = fareClassId ? getFareClassById(fareClassId, language) : undefined;
   if (!fareClass) return null;
 
   return (
@@ -29,7 +31,7 @@ export const FareDetailsSheet: React.FC<{
       </View>
       {onChooseThisFare && (
         <PrimaryButton
-          label={`${fareClass.shortLabel} sınıfını seç`}
+          label={t.fareClasses.chooseButton(fareClass.shortLabel)}
           onPress={() => {
             onChooseThisFare();
             onClose();

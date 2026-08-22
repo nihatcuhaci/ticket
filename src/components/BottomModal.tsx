@@ -3,28 +3,32 @@ import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, radius, spacing, typography } from '../theme';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from '../hooks/useTranslation';
 
 export const BottomModal: React.FC<{
   visible: boolean;
   onClose: () => void;
   title: string;
   children: React.ReactNode;
-}> = ({ visible, onClose, title, children }) => (
-  <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
-    <View style={styles.overlay}>
-      <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityLabel="Kapat" />
-      <SafeAreaView edges={['bottom']} style={styles.sheet}>
-        <View style={styles.header}>
-          <Text style={styles.title}>{title}</Text>
-          <Pressable onPress={onClose} hitSlop={12} accessibilityRole="button" accessibilityLabel="Kapat">
-            <Ionicons name="close" size={24} color={colors.gray800} />
-          </Pressable>
-        </View>
-        <View style={styles.body}>{children}</View>
-      </SafeAreaView>
-    </View>
-  </Modal>
-);
+}> = ({ visible, onClose, title, children }) => {
+  const { t } = useTranslation();
+  return (
+    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
+      <View style={styles.overlay}>
+        <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityLabel={t.common.close} />
+        <SafeAreaView edges={['bottom']} style={styles.sheet}>
+          <View style={styles.header}>
+            <Text style={styles.title}>{title}</Text>
+            <Pressable onPress={onClose} hitSlop={12} accessibilityRole="button" accessibilityLabel={t.common.close}>
+              <Ionicons name="close" size={24} color={colors.gray800} />
+            </Pressable>
+          </View>
+          <View style={styles.body}>{children}</View>
+        </SafeAreaView>
+      </View>
+    </Modal>
+  );
+};
 
 const styles = StyleSheet.create({
   overlay: {

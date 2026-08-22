@@ -5,6 +5,7 @@ import { BottomModal } from './BottomModal';
 import { searchStations } from '../data/stations';
 import { Station } from '../types';
 import { colors, radius, spacing, typography } from '../theme';
+import { useTranslation } from '../hooks/useTranslation';
 
 export const StationPickerModal: React.FC<{
   visible: boolean;
@@ -13,6 +14,7 @@ export const StationPickerModal: React.FC<{
   excludeId?: string;
   title: string;
 }> = ({ visible, onClose, onSelect, excludeId, title }) => {
+  const { t } = useTranslation();
   const [query, setQuery] = useState('');
   const results = useMemo(() => searchStations(query, excludeId), [query, excludeId]);
 
@@ -23,11 +25,11 @@ export const StationPickerModal: React.FC<{
         <TextInput
           value={query}
           onChangeText={setQuery}
-          placeholder="Şehir veya istasyon ara"
+          placeholder={t.stationPicker.searchPlaceholder}
           placeholderTextColor={colors.gray400}
           style={styles.input}
           autoFocus
-          accessibilityLabel="İstasyon ara"
+          accessibilityLabel={t.stationPicker.searchA11y}
         />
       </View>
       <FlatList
@@ -35,9 +37,7 @@ export const StationPickerModal: React.FC<{
         keyExtractor={(s) => s.id}
         style={{ maxHeight: 380 }}
         keyboardShouldPersistTaps="handled"
-        ListEmptyComponent={
-          <Text style={styles.empty}>"{query}" için istasyon bulunamadı.</Text>
-        }
+        ListEmptyComponent={<Text style={styles.empty}>{t.stationPicker.emptyResult(query)}</Text>}
         renderItem={({ item }) => (
           <Pressable
             style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}

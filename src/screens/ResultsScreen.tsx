@@ -25,15 +25,17 @@ import { CurrencyToggle } from '../components/CurrencyToggle';
 import { PrimaryButton, SecondaryButton } from '../components/ui';
 import { useExchangeRates } from '../hooks/useExchangeRates';
 import { CurrencyCode, convert, formatCurrency } from '../services/currencyService';
-import { fareClassById } from '../data/fareClasses';
+import { getFareClassById } from '../data/fareClasses';
+import { useTranslation } from '../hooks/useTranslation';
+import { Strings } from '../i18n/translations';
 
 /** "3 dk önce" / "2 sa önce" — coarse relative freshness label for the live-schedule badge. */
-function relativeFreshness(iso: string): string {
+function relativeFreshness(t: Strings, iso: string): string {
   const minutes = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60000));
-  if (minutes < 1) return 'az önce';
-  if (minutes < 60) return `${minutes} dk önce`;
+  if (minutes < 1) return t.results.freshnessJustNow;
+  if (minutes < 60) return t.results.freshnessMinutesAgo(minutes);
   const hours = Math.round(minutes / 60);
-  return `${hours} sa önce`;
+  return t.results.freshnessHoursAgo(hours);
 }
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Results'>;
@@ -43,6 +45,7 @@ type Leg = 'outbound' | 'return';
 export default function ResultsScreen({ navigation }: Props) {
   const { criteria, setCriteria, selection, setSelection, returnSelection, setReturnSelection } =
     useAppState();
+  const { t, language } = useTranslation();
   const { rates, loading: ratesLoading } = useExchangeRates();
   const [currency, setCurrency] = useState<CurrencyCode>('EUR');
   const [loadState, setLoadState] = useState<LoadState>('loading');
@@ -165,24 +168,24 @@ export default function ResultsScreen({ navigation }: Props) {
           <View style={{ flex: 1 }}>
             {isRoundTrip && (
               <Text style={styles.legLabel}>
-                {leg === 'outbound' ? '1. Gidiş' : '2. Dönüş'}
+                {leg === 'outbound' ? t.results.legOutbound : t.results.legReturn}
               </Text>
             )}
             <Text style={styles.route}>
               {origin?.city} → {destination?.city}
             </Text>
           </View>
-          <SecondaryButton label="Düzenle" onPress={() => navigation.goBack()} style={styles.editBtn} />
+          <SecondaryButton label={t.results.editButton} onPress={() => navigation.goBack()} style={styles.editBtn} />
         </View>
         {isRoundTrip && leg === 'return' && (
           <Pressable
             onPress={() => setLeg('outbound')}
             style={styles.backLink}
             accessibilityRole="button"
-            accessibilityLabel="Gidiş seçimini düzenle"
+            accessibilityLabel={t.results.editOutboundLink}
           >
             <Ionicons name="arrow-back" size={14} color={colors.navy700} />
-            <Text style={styles.backLinkText}>Gidiş seçimini düzenle</Text>
+            <Text style={styles.backLinkText}>{t.results.editOutboundLink}</Text>
           </Pressable>
         )}
         <CurrencyToggle
@@ -193,8 +196,8 @@ export default function ResultsScreen({ navigation }: Props) {
         {loadState === 'ready' && (
           <Text style={styles.scheduleFreshness}>
             {hasLiveJourneys && liveFreshness
-              ? `● Canlı sefer verisi · ${relativeFreshness(liveFreshness.generatedAt)} güncellendi`
-              : '● Sefer saatleri örnek veridir (bkz. README)'}
+              ? t.results.liveFreshness(relativeFreshness(t, liveFreshness.generatedAt))
+              : t.results.syntheticFreshness}
           </Text>
         )}
       </View>
@@ -215,20 +218,18 @@ export default function ResultsScreen({ navigation }: Props) {
       {loadState === 'loading' && (
         <View style={styles.centerState}>
           <ActivityIndicator color={colors.navy800} size="large" />
-          <Text style={styles.centerStateText}>Seferler aranıyor…</Text>
+          <Text style={styles.centerStateText}>{t.results.loading}</Text>
         </View>
       )}
 
       {loadState === 'error' && (
         <View style={styles.centerState}>
           <Ionicons name="cloud-offline-outline" size={40} color={colors.gray400} />
-          <Text style={styles.centerStateTitle}>Seferler yüklenemedi</Text>
-          <Text style={styles.centerStateText}>
-            Bağlantıda geçici bir sorun oluştu. Lütfen tekrar deneyin.
-          </Text>
+          <Text style={styles.centerStateTitle}>{t.results.errorTitle}</Text>
+          <Text style={styles.centerStateText}>{t.results.errorText}</Text>
           <PrimaryButton
-            label="Tekrar dene"
-            onPress={() => setReloadTick((t) => t + 1)}
+            label={t.common.tryAgain}
+            onPress={() => setReloadTick((n) => n + 1)}
             style={{ marginTop: spacing.lg, minWidth: 160 }}
           />
         </View>
@@ -238,12 +239,10 @@ export default function ResultsScreen({ navigation }: Props) {
         <View style={styles.centerState}>
           <Ionicons name="train-outline" size={40} color={colors.gray400} />
           <Text style={styles.centerStateTitle}>
-            {legDate === todayISO() ? 'Bugün için kalan sefer yok' : 'Bu tarihte sefer yok'}
+            {legDate === todayISO() ? t.results.emptyTodayTitle : t.results.emptyOtherTitle}
           </Text>
           <Text style={styles.centerStateText}>
-            {legDate === todayISO()
-              ? 'Bugünkü tüm seferlerin saati geçti. Yarını veya başka bir günü deneyin.'
-              : 'Farklı bir tarih deneyin veya tarih şeridinden başka bir günü seçin.'}
+            {legDate === todayISO() ? t.results.emptyTodayText : t.results.emptyOtherText}
           </Text>
         </View>
       )}
@@ -276,12 +275,12 @@ export default function ResultsScreen({ navigation }: Props) {
           <View style={{ flex: 1 }}>
             <Text style={styles.summaryLabel}>
               {currentSelection.journey.departureTime} ·{' '}
-              {fareClassById(currentSelection.fareClassId)?.shortLabel}
+              {getFareClassById(currentSelection.fareClassId, language)?.shortLabel}
             </Text>
             <Text style={styles.summaryPrice}>{priceLabel(currentSelection.price)}</Text>
           </View>
           <PrimaryButton
-            label={isRoundTrip && leg === 'outbound' ? 'Dönüş seç' : 'Devam et'}
+            label={isRoundTrip && leg === 'outbound' ? t.results.chooseReturn : t.results.continueButton}
             onPress={handleContinue}
             style={{ minWidth: 140 }}
           />

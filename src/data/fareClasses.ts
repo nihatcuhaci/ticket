@@ -1,50 +1,35 @@
 import { FareClassInfo } from '../types';
+import { Language, TRANSLATIONS } from '../i18n/translations';
 
 /**
  * Fare class definitions and their perks, closely modelled on the real
  * conditions publicly listed on eurostar.com at the time of research
  * (Aug 2026) — exchange/refund policy, luggage allowance, on-board
  * services. Wording rewritten in our own voice, not copied verbatim.
+ *
+ * The marketing `label`/`shortLabel` ("EuroTrain Standard"/"Standard")
+ * are brand names and stay identical in every language. The
+ * `description` and `perks` are real sentences, so they're sourced from
+ * translations.ts and vary by language — see that file's header comment
+ * for why (this used to be hardcoded English-only, a real bug for
+ * Turkish-language sessions).
  */
-export const FARE_CLASSES: FareClassInfo[] = [
-  {
-    id: 'standard',
-    label: 'EuroTrain Standard',
-    shortLabel: 'Standard',
-    description: 'Great value for a comfortable, no-frills journey.',
-    perks: [
-      'Exchange free up to 1 hour before departure (fare difference may apply)',
-      'Refundable up to 7 days before departure for a small fee',
-      '2 pieces of luggage + 1 small bag',
-      'Buy snacks and drinks on board',
-      'Free on-board wi-fi',
-    ],
-  },
-  {
-    id: 'plus',
-    label: 'EuroTrain Plus',
-    shortLabel: 'Plus',
-    description: 'Extra legroom, a bigger seat and a light meal included.',
-    perks: [
-      'Everything in Standard',
-      'Wider, more spacious seating',
-      'Light meal and drink served at your seat',
-      'Priority boarding',
-    ],
-  },
-  {
-    id: 'premier',
-    label: 'EuroTrain Premier',
-    shortLabel: 'Premier',
-    description: 'The most flexible, most comfortable way to travel.',
-    perks: [
-      'Everything in Plus',
-      'Fully flexible: free exchanges and refunds',
-      'Full at-seat meal service',
-      'Access to partner lounges where available',
-    ],
-  },
-];
+const SHORT_LABELS: Record<string, string> = {
+  standard: 'Standard',
+  plus: 'Plus',
+  premier: 'Premier',
+};
 
-export const fareClassById = (id: string): FareClassInfo | undefined =>
-  FARE_CLASSES.find((f) => f.id === id);
+export function getFareClasses(language: Language): FareClassInfo[] {
+  const fc = TRANSLATIONS[language].fareClasses;
+  return (['standard', 'plus', 'premier'] as const).map((id) => ({
+    id,
+    label: fc[id].label,
+    shortLabel: SHORT_LABELS[id],
+    description: fc[id].description,
+    perks: fc[id].perks,
+  }));
+}
+
+export const getFareClassById = (id: string, language: Language): FareClassInfo | undefined =>
+  getFareClasses(language).find((f) => f.id === id);

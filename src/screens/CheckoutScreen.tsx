@@ -7,19 +7,25 @@ import { RootStackParamList } from '../navigation/types';
 import { colors, radius, spacing, typography } from '../theme';
 import { useAppState } from '../state/AppState';
 import { stationById } from '../data/stations';
-import { fareClassById } from '../data/fareClasses';
+import { getFareClassById } from '../data/fareClasses';
 import { PrimaryButton, SecondaryButton } from '../components/ui';
-import { buildEurostarSearchUrl } from '../services/eurostarLink';
+import { buildBookingSearchUrl } from '../services/bookingLink';
 import { useExchangeRates } from '../hooks/useExchangeRates';
 import { convert, formatCurrency } from '../services/currencyService';
 import { SelectedFare } from '../types';
+import { useTranslation } from '../hooks/useTranslation';
+import { Language } from '../i18n/translations';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Checkout'>;
 
-const TripLegCard: React.FC<{ label?: string; leg: SelectedFare }> = ({ label, leg }) => {
+const TripLegCard: React.FC<{ label?: string; leg: SelectedFare; language: Language }> = ({
+  label,
+  leg,
+  language,
+}) => {
   const origin = stationById(leg.journey.originId);
   const destination = stationById(leg.journey.destinationId);
-  const fareClass = fareClassById(leg.fareClassId);
+  const fareClass = getFareClassById(leg.fareClassId, language);
   return (
     <View style={styles.tripCard}>
       {label && <Text style={styles.tripLegLabel}>{label}</Text>}
@@ -35,6 +41,7 @@ const TripLegCard: React.FC<{ label?: string; leg: SelectedFare }> = ({ label, l
 
 export default function CheckoutScreen({ navigation }: Props) {
   const { criteria, selection, returnSelection } = useAppState();
+  const { t, language } = useTranslation();
   const { rates } = useExchangeRates();
   const [opening, setOpening] = useState(false);
   const isRoundTrip = criteria.tripType === 'roundtrip';
@@ -44,7 +51,7 @@ export default function CheckoutScreen({ navigation }: Props) {
 
   const handleContinue = async () => {
     if (!selection) return;
-    const url = buildEurostarSearchUrl(
+    const url = buildBookingSearchUrl(
       selection.journey.originId,
       selection.journey.destinationId,
       selection.journey.date,
@@ -52,7 +59,7 @@ export default function CheckoutScreen({ navigation }: Props) {
       isRoundTrip ? returnSelection?.journey.date : null
     );
     if (!url) {
-      Alert.alert('Yönlendirilemedi', 'Bu güzergah için eurostar.com bağlantısı oluşturulamadı.');
+      Alert.alert(t.checkout.cantRedirectTitle, t.checkout.cantRedirectText);
       return;
     }
     setOpening(true);
@@ -60,7 +67,7 @@ export default function CheckoutScreen({ navigation }: Props) {
       await Linking.openURL(url);
       navigation.replace('Confirmation');
     } catch (e) {
-      Alert.alert('Açılamadı', 'eurostar.com şu anda açılamadı. Lütfen tekrar deneyin.');
+      Alert.alert(t.checkout.cantOpenTitle, t.checkout.cantOpenText);
     } finally {
       setOpening(false);
     }
@@ -70,8 +77,12 @@ export default function CheckoutScreen({ navigation }: Props) {
     return (
       <SafeAreaView style={styles.safe}>
         <View style={styles.centerState}>
-          <Text style={typography.body as any}>Önce bir sefer seçmelisiniz.</Text>
-          <PrimaryButton label="Aramaya dön" onPress={() => navigation.navigate('Home')} style={{ marginTop: spacing.lg }} />
+          <Text style={typography.body as any}>{t.checkout.needSelectionText}</Text>
+          <PrimaryButton
+            label={t.checkout.backToSearch}
+            onPress={() => navigation.navigate('Home')}
+            style={{ marginTop: spacing.lg }}
+          />
         </View>
       </SafeAreaView>
     );
@@ -81,8 +92,12 @@ export default function CheckoutScreen({ navigation }: Props) {
     return (
       <SafeAreaView style={styles.safe}>
         <View style={styles.centerState}>
-          <Text style={typography.body as any}>Önce dönüş seferini de seçmelisiniz.</Text>
-          <SecondaryButton label="Sonuçlara dön" onPress={() => navigation.goBack()} style={{ marginTop: spacing.lg }} />
+          <Text style={typography.body as any}>{t.checkout.needReturnSelectionText}</Text>
+          <SecondaryButton
+            label={t.checkout.backToResults}
+            onPress={() => navigation.goBack()}
+            style={{ marginTop: spacing.lg }}
+          />
         </View>
       </SafeAreaView>
     );
@@ -91,39 +106,36 @@ export default function CheckoutScreen({ navigation }: Props) {
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
-        <TripLegCard label={isRoundTrip ? 'Gidiş' : undefined} leg={selection} />
-        {isRoundTrip && returnSelection && <TripLegCard label="Dönüş" leg={returnSelection} />}
+        <TripLegCard label={isRoundTrip ? t.checkout.legOutbound : undefined} leg={selection} language={language} />
+        {isRoundTrip && returnSelection && (
+          <TripLegCard label={t.checkout.legReturn} leg={returnSelection} language={language} />
+        )}
 
-        <Text style={styles.sectionTitle}>Fiyat özeti</Text>
+        <Text style={styles.sectionTitle}>{t.checkout.sectionTitle}</Text>
         <View style={styles.formCard}>
           <View style={styles.priceRow}>
-            <Text style={styles.priceLabel}>
-              Bu uygulamada gösterilen tahmini {isRoundTrip ? 'toplam ' : ''}fiyat
-            </Text>
+            <Text style={styles.priceLabel}>{t.checkout.priceLabel(isRoundTrip)}</Text>
             <Text style={styles.priceValue}>{totalLabel}</Text>
           </View>
-          <Text style={styles.priceNote}>
-            Kesin fiyat, koltuk uygunluğu ve varsa promosyonlar eurostar.com üzerinde değişiklik gösterebilir.
-          </Text>
+          <Text style={styles.priceNote}>{t.checkout.priceNote}</Text>
         </View>
 
         <View style={styles.infoCard}>
           <Ionicons name="information-circle-outline" size={18} color={colors.navy700} />
           <Text style={styles.infoText}>
-            EuroTrain, ödeme veya bilet ihracı yapmaz. "Eurostar.com'da devam et" seçildiğinde aynı
-            güzergah, {isRoundTrip ? 'gidiş-dönüş tarihleri' : 'tarih'} ve yolcu sayısıyla
-            eurostar.com'un gerçek arama sonuçlarına yönlendirilirsiniz; satın alma işlemi tamamen
-            Eurostar'ın kendi sitesinde, kendi güvenli ödeme altyapısıyla tamamlanır.
+            {t.checkout.infoText(
+              isRoundTrip ? t.checkout.infoTextDateWordRoundtrip : t.checkout.infoTextDateWordOneway
+            )}
           </Text>
         </View>
       </ScrollView>
 
       <View style={styles.footer}>
         <View style={styles.footerTotalRow}>
-          <Text style={styles.totalLabel}>Tahmini toplam</Text>
+          <Text style={styles.totalLabel}>{t.checkout.totalLabel}</Text>
           <Text style={styles.totalPrice}>{totalLabel}</Text>
         </View>
-        <PrimaryButton label="Eurostar.com'da devam et" onPress={handleContinue} loading={opening} />
+        <PrimaryButton label={t.checkout.continueButton} onPress={handleContinue} loading={opening} />
       </View>
     </SafeAreaView>
   );

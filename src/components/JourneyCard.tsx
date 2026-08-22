@@ -3,9 +3,10 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, radius, spacing, typography } from '../theme';
 import { FareClassId, Journey } from '../types';
-import { FARE_CLASSES } from '../data/fareClasses';
+import { getFareClasses } from '../data/fareClasses';
 import { CurrencyCode, convert, formatCurrency, ExchangeRates } from '../services/currencyService';
 import { Badge } from './ui';
+import { useTranslation } from '../hooks/useTranslation';
 
 export const JourneyCard: React.FC<{
   journey: Journey;
@@ -15,6 +16,8 @@ export const JourneyCard: React.FC<{
   onSelectFare: (fareClassId: FareClassId) => void;
   onShowConditions: (fareClassId: FareClassId) => void;
 }> = ({ journey, currency, rates, selectedFareClassId, onSelectFare, onShowConditions }) => {
+  const { t, language } = useTranslation();
+  const fareClasses = getFareClasses(language);
   const lowestPrice = Math.min(
     ...journey.fares.filter((f) => f.price !== null).map((f) => f.price as number)
   );
@@ -28,13 +31,18 @@ export const JourneyCard: React.FC<{
         <View>
           <View style={styles.timeAndBadge}>
             <Text style={styles.time}>{journey.departureTime}</Text>
-            {journey.live && <Badge label="Canlı" tone="teal" />}
+            {journey.live && <Badge label={t.journeyCard.live} tone="teal" />}
           </View>
-          <Text style={styles.station}>{journey.durationMinutes >= 60
-            ? `${Math.floor(journey.durationMinutes / 60)}sa ${journey.durationMinutes % 60}dk`
-            : `${journey.durationMinutes}dk`}</Text>
+          <Text style={styles.station}>
+            {journey.durationMinutes >= 60
+              ? t.journeyCard.durationHoursMinutes(
+                  Math.floor(journey.durationMinutes / 60),
+                  journey.durationMinutes % 60
+                )
+              : t.journeyCard.durationMinutes(journey.durationMinutes)}
+          </Text>
           {journey.live && (journey.delayMinutes ?? 0) > 0 && (
-            <Text style={styles.delayText}>+{journey.delayMinutes} dk gecikme bildirildi</Text>
+            <Text style={styles.delayText}>{t.journeyCard.delayReported(journey.delayMinutes ?? 0)}</Text>
           )}
         </View>
         <View style={styles.timeline}>
@@ -46,12 +54,12 @@ export const JourneyCard: React.FC<{
         </View>
         <View style={{ alignItems: 'flex-end' }}>
           <Text style={styles.time}>{journey.arrivalTime}</Text>
-          <Text style={styles.station}>{journey.direct ? 'Aktarmasız' : 'Aktarmalı'}</Text>
+          <Text style={styles.station}>{journey.direct ? t.journeyCard.direct : t.journeyCard.connecting}</Text>
         </View>
       </View>
 
       <View style={styles.fareRow}>
-        {FARE_CLASSES.map((fc) => {
+        {fareClasses.map((fc) => {
           const fare = journey.fares.find((f) => f.classId === fc.id);
           const available = fare && fare.price !== null;
           const selected = selectedFareClassId === fc.id;
@@ -62,9 +70,10 @@ export const JourneyCard: React.FC<{
               onPress={() => available && onSelectFare(fc.id)}
               onLongPress={() => onShowConditions(fc.id)}
               accessibilityRole="button"
-              accessibilityLabel={`${fc.label} sınıfını seç, fiyat ${
-                available ? priceLabel(fare!.price as number) : 'mevcut değil'
-              }`}
+              accessibilityLabel={t.journeyCard.selectFareA11y(
+                fc.label,
+                available ? priceLabel(fare!.price as number) : t.journeyCard.notAvailable
+              )}
               style={[
                 styles.fareCell,
                 selected && styles.fareCellSelected,
@@ -80,16 +89,16 @@ export const JourneyCard: React.FC<{
                     {priceLabel(fare!.price as number)}
                   </Text>
                   {fare!.price === lowestPrice && (
-                    <Badge label="En düşük" tone={selected ? 'amber' : 'teal'} />
+                    <Badge label={t.journeyCard.lowestBadge} tone={selected ? 'amber' : 'teal'} />
                   )}
                   {fare!.seatsLeft !== null && fare!.seatsLeft <= 8 && (
                     <Text style={[styles.seatsLeft, selected && styles.textOnSelected]}>
-                      {fare!.seatsLeft} koltuk kaldı
+                      {t.journeyCard.seatsLeft(fare!.seatsLeft)}
                     </Text>
                   )}
                 </>
               ) : (
-                <Text style={styles.notAvailable}>Dolu</Text>
+                <Text style={styles.notAvailable}>{t.common.soldOut}</Text>
               )}
             </Pressable>
           );
@@ -100,7 +109,7 @@ export const JourneyCard: React.FC<{
         style={styles.conditionsLink}
         accessibilityRole="button"
       >
-        <Text style={styles.conditionsText}>Bilet koşullarını gör</Text>
+        <Text style={styles.conditionsText}>{t.journeyCard.viewConditions}</Text>
       </Pressable>
     </View>
   );

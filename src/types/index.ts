@@ -12,12 +12,15 @@ export interface Station {
   lat: number;
   lng: number;
   /**
-   * Eurostar.com's own numeric station id, used only to build the
-   * outbound deep-link URL on checkout (see services/eurostarLink.ts).
-   * Captured by hand from eurostar.com search results — there is no
-   * public station-lookup API to pull this from live.
+   * eurotrain.net's own city/station slug, combined with countryCode above
+   * (as "<countryCode>:<slug>") to build the outbound deep-link URL on
+   * checkout (see services/bookingLink.ts). Captured by hand from
+   * eurotrain.net search results — there is no public station-lookup API
+   * to pull this from live. Most cities use a plain lowercase slug (e.g.
+   * "london"); Disneyland Paris is the one exception here, resolving to
+   * its own station slug rather than sharing Paris Gare du Nord's "paris".
    */
-  eurostarId: string;
+  bookingSlug: string;
 }
 
 export interface FareClassInfo {
@@ -95,6 +98,29 @@ export interface SelectedFare {
   journey: Journey;
   fareClassId: FareClassId;
   price: number;
+}
+
+/**
+ * A remembered past search, persisted locally (see services/recentSearches.ts)
+ * so Home can offer a one-tap "search again". Deliberately does NOT store
+ * `date`/`returnDate` — unlike SearchCriteria, which it's otherwise a subset
+ * of. Replaying a search always re-dates it to "today" (and, for a round
+ * trip, a fresh default return date) rather than the literal date it was
+ * originally searched for, since that date is very likely in the past by
+ * the time it's tapped again. This mirrors the "recent searches" pattern in
+ * real travel apps (e.g. Google Flights), which re-run against current
+ * dates rather than replaying stale ones.
+ */
+export interface RecentSearch {
+  /** `${originId}-${destinationId}-${tripType}` — also used to dedupe. */
+  id: string;
+  originId: string;
+  destinationId: string;
+  tripType: TripType;
+  passengers: PassengerCounts;
+  wheelchairUser: boolean;
+  /** Date.now() at save time — sort key only, never shown or replayed. */
+  savedAt: number;
 }
 
 export type TravelReason = 'business' | 'holiday' | 'family_friends';

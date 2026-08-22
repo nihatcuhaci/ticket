@@ -5,14 +5,16 @@ import { BottomModal } from './BottomModal';
 import { PassengerCategory, PassengerCounts } from '../types';
 import { colors, radius, spacing, typography } from '../theme';
 import { PrimaryButton } from './ui';
+import { useTranslation } from '../hooks/useTranslation';
 
-const CATEGORY_META: { id: PassengerCategory; label: string; hint: string; min: number }[] = [
-  { id: 'adult', label: 'Yetişkin', hint: '26-59 yaş', min: 1 },
-  { id: 'youth', label: 'Genç', hint: '12-25 yaş', min: 0 },
-  { id: 'child', label: 'Çocuk', hint: '0-11 yaş', min: 0 },
-  { id: 'senior', label: 'Senior', hint: '60+ yaş', min: 0 },
-  { id: 'infant', label: 'Bebek', hint: '0-3 yaş, kucakta ücretsiz', min: 0 },
-];
+const CATEGORY_IDS: PassengerCategory[] = ['adult', 'youth', 'child', 'senior', 'infant'];
+const CATEGORY_MIN: Record<PassengerCategory, number> = {
+  adult: 1,
+  youth: 0,
+  child: 0,
+  senior: 0,
+  infant: 0,
+};
 
 export const PassengerPickerModal: React.FC<{
   visible: boolean;
@@ -22,16 +24,22 @@ export const PassengerPickerModal: React.FC<{
   onChange: (value: PassengerCounts) => void;
   onChangeWheelchair: (value: boolean) => void;
 }> = ({ visible, onClose, value, wheelchairUser, onChange, onChangeWheelchair }) => {
+  const { t } = useTranslation();
   const total = Object.values(value).reduce((a, b) => a + b, 0);
+  const CATEGORY_META = CATEGORY_IDS.map((id) => ({
+    id,
+    ...t.passengerPicker.categories[id],
+    min: CATEGORY_MIN[id],
+  }));
 
   const update = (id: PassengerCategory, delta: number) => {
-    const min = CATEGORY_META.find((c) => c.id === id)!.min;
+    const min = CATEGORY_MIN[id];
     const next = Math.max(min, Math.min(9, value[id] + delta));
     onChange({ ...value, [id]: next });
   };
 
   return (
-    <BottomModal visible={visible} onClose={onClose} title="Yolcular">
+    <BottomModal visible={visible} onClose={onClose} title={t.passengerPicker.title}>
       {CATEGORY_META.map((cat) => (
         <View key={cat.id} style={styles.row}>
           <View>
@@ -44,7 +52,7 @@ export const PassengerPickerModal: React.FC<{
               disabled={value[cat.id] <= cat.min}
               style={[styles.counterBtn, value[cat.id] <= cat.min && styles.counterBtnDisabled]}
               accessibilityRole="button"
-              accessibilityLabel={`${cat.label} azalt`}
+              accessibilityLabel={t.passengerPicker.decreaseA11y(cat.label)}
             >
               <Ionicons name="remove" size={18} color={colors.navy700} />
             </Pressable>
@@ -53,7 +61,7 @@ export const PassengerPickerModal: React.FC<{
               onPress={() => update(cat.id, 1)}
               style={styles.counterBtn}
               accessibilityRole="button"
-              accessibilityLabel={`${cat.label} arttır`}
+              accessibilityLabel={t.passengerPicker.increaseA11y(cat.label)}
             >
               <Ionicons name="add" size={18} color={colors.navy700} />
             </Pressable>
@@ -63,14 +71,14 @@ export const PassengerPickerModal: React.FC<{
 
       <View style={[styles.row, { marginTop: spacing.sm }]}>
         <View style={{ flex: 1 }}>
-          <Text style={styles.label}>Tekerlekli sandalye kullanıcısı</Text>
-          <Text style={styles.hint}>Erişilebilir koltuk ve alanları önceliklendirir</Text>
+          <Text style={styles.label}>{t.passengerPicker.wheelchairLabel}</Text>
+          <Text style={styles.hint}>{t.passengerPicker.wheelchairHint}</Text>
         </View>
         <Switch value={wheelchairUser} onValueChange={onChangeWheelchair} />
       </View>
 
       <PrimaryButton
-        label={`Devam et (${total} yolcu)`}
+        label={t.passengerPicker.continueButton(total)}
         onPress={onClose}
         style={{ marginTop: spacing.lg }}
       />

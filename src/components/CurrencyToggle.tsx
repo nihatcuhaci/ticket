@@ -2,6 +2,7 @@ import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { colors, radius, spacing, typography } from '../theme';
 import { CurrencyCode } from '../services/currencyService';
+import { useTranslation } from '../hooks/useTranslation';
 
 const OPTIONS: CurrencyCode[] = ['EUR', 'TRY', 'USD', 'GBP'];
 
@@ -9,28 +10,29 @@ export const CurrencyToggle: React.FC<{
   value: CurrencyCode;
   onChange: (c: CurrencyCode) => void;
   freshness?: 'live' | 'fallback' | null;
-}> = ({ value, onChange, freshness }) => (
-  <View style={styles.wrap}>
-    <View style={styles.row}>
-      {OPTIONS.map((c) => (
-        <Pressable
-          key={c}
-          onPress={() => onChange(c)}
-          style={[styles.chip, value === c && styles.chipSelected]}
-          accessibilityRole="button"
-          accessibilityLabel={`${c} para birimini göster`}
-        >
-          <Text style={[styles.chipText, value === c && styles.chipTextSelected]}>{c}</Text>
-        </Pressable>
-      ))}
+}> = ({ value, onChange, freshness }) => {
+  const { t } = useTranslation();
+  return (
+    <View style={styles.wrap}>
+      <View style={styles.row}>
+        {OPTIONS.map((c) => (
+          <Pressable
+            key={c}
+            onPress={() => onChange(c)}
+            style={[styles.chip, value === c && styles.chipSelected]}
+            accessibilityRole="button"
+            accessibilityLabel={t.currency.showInA11y(c)}
+          >
+            <Text style={[styles.chipText, value === c && styles.chipTextSelected]}>{c}</Text>
+          </Pressable>
+        ))}
+      </View>
+      {freshness && (
+        <Text style={styles.freshness}>{freshness === 'live' ? t.currency.live : t.currency.fallback}</Text>
+      )}
     </View>
-    {freshness && (
-      <Text style={styles.freshness}>
-        {freshness === 'live' ? '● Canlı kur' : '● Kur şu an alınamadı, önbellek gösteriliyor'}
-      </Text>
-    )}
-  </View>
-);
+  );
+};
 
 const styles = StyleSheet.create({
   wrap: { gap: 4 },

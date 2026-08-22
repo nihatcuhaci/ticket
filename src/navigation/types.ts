@@ -3,4 +3,5 @@ export type RootStackParamList = {
   Results: undefined;
   Checkout: undefined;
   Confirmation: undefined;
+  Help: undefined;
 };

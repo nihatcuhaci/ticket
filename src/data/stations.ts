@@ -21,7 +21,7 @@ export const STATIONS: Station[] = [
     countryCode: 'GB',
     lat: 51.5308,
     lng: -0.1257,
-    eurostarId: '7015400',
+    bookingSlug: 'london',
   },
   {
     id: 'par',
@@ -32,7 +32,7 @@ export const STATIONS: Station[] = [
     countryCode: 'FR',
     lat: 48.8809,
     lng: 2.3553,
-    eurostarId: '8727100',
+    bookingSlug: 'paris',
   },
   {
     id: 'dlp',
@@ -43,7 +43,7 @@ export const STATIONS: Station[] = [
     countryCode: 'FR',
     lat: 48.8722,
     lng: 2.7828,
-    eurostarId: '8711184',
+    bookingSlug: 'marne_la_vallee_chessy',
   },
   {
     id: 'bru',
@@ -54,7 +54,7 @@ export const STATIONS: Station[] = [
     countryCode: 'BE',
     lat: 50.8357,
     lng: 4.3358,
-    eurostarId: '8814001',
+    bookingSlug: 'brussels',
   },
   {
     id: 'ams',
@@ -65,7 +65,7 @@ export const STATIONS: Station[] = [
     countryCode: 'NL',
     lat: 52.3791,
     lng: 4.9003,
-    eurostarId: '8400058',
+    bookingSlug: 'amsterdam',
   },
   {
     id: 'rtd',
@@ -76,7 +76,7 @@ export const STATIONS: Station[] = [
     countryCode: 'NL',
     lat: 51.9244,
     lng: 4.4691,
-    eurostarId: '8400530',
+    bookingSlug: 'rotterdam',
   },
   {
     id: 'lil',
@@ -87,7 +87,7 @@ export const STATIONS: Station[] = [
     countryCode: 'FR',
     lat: 50.6395,
     lng: 3.0752,
-    eurostarId: '8722326',
+    bookingSlug: 'lille',
   },
   {
     id: 'cgn',
@@ -98,7 +98,7 @@ export const STATIONS: Station[] = [
     countryCode: 'DE',
     lat: 50.9432,
     lng: 6.9583,
-    eurostarId: '8015458',
+    bookingSlug: 'cologne',
   },
   {
     id: 'brg',
@@ -109,7 +109,7 @@ export const STATIONS: Station[] = [
     countryCode: 'BE',
     lat: 51.1969,
     lng: 3.2167,
-    eurostarId: '8891009',
+    bookingSlug: 'bruges',
   },
 ];
 

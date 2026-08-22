@@ -4,9 +4,7 @@ import { colors, radius, spacing, typography } from '../theme';
 import { generateDayPrice, isoDateAddDays } from '../services/journeyGenerator';
 import { RouteDefinition } from '../types';
 import { CurrencyCode, convert, formatCurrency, ExchangeRates } from '../services/currencyService';
-
-const WEEKDAYS = ['Paz', 'Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt'];
-const MONTHS = ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz', 'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara'];
+import { useTranslation } from '../hooks/useTranslation';
 
 export const DateStrip: React.FC<{
   route: RouteDefinition;
@@ -18,23 +16,48 @@ export const DateStrip: React.FC<{
    * trip's return leg so it can't be browsed to before the outbound date. */
   minDateISO?: string;
 }> = ({ route, selectedDate, onSelect, currency, rates, minDateISO }) => {
+  const { t } = useTranslation();
   const days = useMemo(
     () => Array.from({ length: 9 }, (_, i) => isoDateAddDays(selectedDate, i - 3)),
     [selectedDate]
   );
 
+  // Computed once per window of visible days so the cheapest one can be
+  // highlighted — the "top suggestions" a shopper scans before picking a
+  // date, so the best price among them should stand out at a glance.
+  const dayEntries = useMemo(
+    () =>
+      days.map((date) => ({
+        date,
+        disabled: !!minDateISO && date < minDateISO,
+        dayPrice: generateDayPrice(route, date),
+      })),
+    [days, route, minDateISO]
+  );
+
+  const cheapestDate = useMemo(() => {
+    let best: { date: string; price: number } | null = null;
+    for (const entry of dayEntries) {
+      if (entry.disabled || entry.dayPrice.lowestFare === null) continue;
+      if (!best || entry.dayPrice.lowestFare < best.price) {
+        best = { date: entry.date, price: entry.dayPrice.lowestFare };
+      }
+    }
+    return best?.date ?? null;
+  }, [dayEntries]);
+
   return (
     <FlatList
       horizontal
-      data={days}
-      keyExtractor={(d) => d}
+      data={dayEntries}
+      keyExtractor={(entry) => entry.date}
       showsHorizontalScrollIndicator={false}
       contentContainerStyle={{ paddingHorizontal: spacing.lg, gap: spacing.sm }}
       renderItem={({ item }) => {
-        const d = new Date(item + 'T00:00:00');
-        const selected = item === selectedDate;
-        const disabled = !!minDateISO && item < minDateISO;
-        const dayPrice = generateDayPrice(route, item);
+        const { date, disabled, dayPrice } = item;
+        const d = new Date(date + 'T00:00:00');
+        const selected = date === selectedDate;
+        const isCheapest = !selected && !disabled && date === cheapestDate;
         const displayPrice =
           dayPrice.lowestFare !== null && rates
             ? formatCurrency(convert(dayPrice.lowestFare, currency, rates), currency)
@@ -42,19 +65,26 @@ export const DateStrip: React.FC<{
             ? `€${dayPrice.lowestFare}`
             : null;
 
+        const dayLabel = `${t.weekdaysShort[d.getDay()]} ${d.getDate()} ${t.monthsShort[d.getMonth()]}`;
+
         return (
           <Pressable
-            onPress={() => !disabled && onSelect(item)}
+            onPress={() => !disabled && onSelect(date)}
             disabled={disabled}
-            style={[styles.chip, selected && styles.chipSelected, disabled && styles.chipDisabled]}
+            style={[
+              styles.chip,
+              selected && styles.chipSelected,
+              isCheapest && styles.chipCheapest,
+              disabled && styles.chipDisabled,
+            ]}
             accessibilityRole="button"
-            accessibilityLabel={`${item} tarihini seç`}
+            accessibilityLabel={t.datePicker.dateChipA11y(dayLabel)}
           >
             <Text style={[styles.day, selected && styles.textSelected, disabled && styles.textDisabled]}>
-              {WEEKDAYS[d.getDay()]} {d.getDate()} {MONTHS[d.getMonth()]}
+              {dayLabel}
             </Text>
             <Text style={[styles.price, selected && styles.textSelected, disabled && styles.textDisabled]}>
-              {disabled ? '—' : displayPrice ?? 'Dolu'}
+              {disabled ? '—' : displayPrice ?? t.common.soldOut}
             </Text>
           </Pressable>
         );
@@ -81,6 +111,13 @@ const styles = StyleSheet.create({
   chipDisabled: {
     backgroundColor: colors.gray100,
     borderColor: colors.gray100,
+  },
+  // Light green fill + green border on the box itself — text keeps its
+  // normal color, only the container is highlighted.
+  chipCheapest: {
+    backgroundColor: '#E3F5EA',
+    borderColor: colors.success,
+    borderWidth: 1.5,
   },
   day: { ...typography.tiny, color: colors.gray600 },
   price: { ...typography.bodyStrong, color: colors.navy900, marginTop: 4 },
