@@ -32,7 +32,10 @@
       }
     },
     "runtimeVersion": {
-      "policy": "appVersion"
+      "policy": "sdkVersion"
+    },
+    "experiments": {
+      "baseUrl": "/ticket"
     },
     "updates": {
       "url": "https://u.expo.dev/9d76b6ad-204e-478b-aacd-6ce673db112e"
