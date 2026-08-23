@@ -14,6 +14,8 @@ No install, no account needed to try it. Scan or open on a phone with the free *
 
 This opens the actual app running natively on your device via EAS Update, published from the `preview` branch: not a web preview or a mockup, the real `journeyGenerator`/`bookingLink`/`liveScheduleService` code from this repo. No login or Expo account required to open the link; it's a public preview page with a QR code and an "Open in Expo Go" option, verified working (logged out) on both Android and iOS. (For a browser-based preview instead, see §2 Quick Start for the local `expo export --platform web` build.)
 
+Prefer a direct install on Android, no Expo Go needed? Download the APK straight from the EAS build page: **[expo.dev/.../builds/d6a0faa3-...](https://expo.dev/accounts/nhttt/projects/eurotrain/builds/d6a0faa3-4a37-48ec-b61a-342ad380d9bb)**. No login required there either, the project's unauthenticated-access setting for internal builds is on. This build link stays valid for about 30 days from when it was created (Aug 23, 2026).
+
 ---
 
 ## 1. What I Built

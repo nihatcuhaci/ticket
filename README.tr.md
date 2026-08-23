@@ -14,6 +14,8 @@ Kurulum ya da hesap gerekmiyor. Ücretsiz **Expo Go** uygulaması kurulu bir tel
 
 Bu link, cihazda gerçekten native olarak çalışan uygulamayı EAS Update üzerinden `preview` branch'inden açıyor: web önizlemesi ya da mockup değil, bu reponun gerçek `journeyGenerator`/`bookingLink`/`liveScheduleService` kodu. Linki açmak için giriş yapmaya ya da Expo hesabına gerek yok; herkese açık bir önizleme sayfası, QR kod ve "Open in Expo Go" seçeneğiyle. Çıkış yapılmış bir oturumda hem Android hem iOS'ta çalıştığı doğrulandı. (Tarayıcı tabanlı bir önizleme istersen, yerel `expo export --platform web` build'i için [§2 Hızlı başlangıç](#2-hızlı-başlangıç)'a bakın.)
 
+Expo Go'ya gerek kalmadan Android'e doğrudan kurulumu mu tercih edersiniz? APK'yı doğrudan EAS build sayfasından indirin: **[expo.dev/.../builds/d6a0faa3-...](https://expo.dev/accounts/nhttt/projects/eurotrain/builds/d6a0faa3-4a37-48ec-b61a-342ad380d9bb)**. Orada da giriş yapmaya gerek yok, projenin internal build'ler için hesapsız erişim ayarı açık. Bu build linki oluşturulduğu tarihten (23 Ağustos 2026) itibaren yaklaşık 30 gün geçerli kalır.
+
 ---
 
 ## 1. Neler yaptım
