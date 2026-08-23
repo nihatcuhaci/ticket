@@ -8,15 +8,11 @@ Built with React Native (Expo) + TypeScript. Runs on iOS, Android and web from a
 
 ## Live Preview
 
-No install, no account needed to try it. Scan or open on a phone with the free **Expo Go** app installed ([App Store](https://apps.apple.com/app/expo-go/id982107779) / [Play Store](https://play.google.com/store/apps/details?id=host.exp.exponent)):
+No install, no account needed to try it.
 
-**[expo.dev/preview/update?...](https://expo.dev/preview/update?message=Fix&updateRuntimeVersion=exposdk%3A57.0.0&createdAt=2026-08-23T21%3A12%3A49.856Z&slug=exp&projectId=9d76b6ad-204e-478b-aacd-6ce673db112e&group=b7b47140-1ff4-47ff-8425-747209d7a2c7)** (on the page, choose **Expo Go**, not "Development build")
+**Android, direct install:** download the APK straight from the EAS build page: **[expo.dev/.../builds/d6a0faa3-...](https://expo.dev/accounts/nhttt/projects/eurotrain/builds/d6a0faa3-4a37-48ec-b61a-342ad380d9bb)**. No login required, the project's unauthenticated-access setting for internal builds is on. This build link stays valid for about 30 days from when it was created (Aug 23, 2026).
 
-This opens the actual app running natively on your device via EAS Update, published from the `preview` branch: not a web preview or a mockup, the real `journeyGenerator`/`bookingLink`/`liveScheduleService` code from this repo. No login or Expo account required to open the link; it's a public preview page with a QR code and an "Open in Expo Go" option, verified working (logged out) on both Android and iOS. (For a browser-based preview instead, see §2 Quick Start for the local `expo export --platform web` build.)
-
-Prefer a direct install on Android, no Expo Go needed? Download the APK straight from the EAS build page: **[expo.dev/.../builds/d6a0faa3-...](https://expo.dev/accounts/nhttt/projects/eurotrain/builds/d6a0faa3-4a37-48ec-b61a-342ad380d9bb)**. No login required there either, the project's unauthenticated-access setting for internal builds is on. This build link stays valid for about 30 days from when it was created (Aug 23, 2026).
-
-On iOS (or in any browser): **[nihatcuhaci.github.io/ticket](https://nihatcuhaci.github.io/ticket/)**, the deployed web export. There's no native iOS build in this submission because installing a real app on a physical iPhone requires a paid Apple Developer Program membership, which this project doesn't have.
+**iOS, or any browser:** **[nihatcuhaci.github.io/ticket](https://nihatcuhaci.github.io/ticket/)**, the deployed web export. There's no native iOS build in this submission because installing a real app on a physical iPhone requires a paid Apple Developer Program membership, which this project doesn't have.
 
 ---
 
