@@ -10,20 +10,23 @@
       "android": {
         "buildType": "apk",
         "image": "sdk-57"
-      }
+      },
+      "channel": "development"
     },
     "preview": {
       "distribution": "internal",
       "android": {
         "buildType": "apk",
         "image": "sdk-57"
-      }
+      },
+      "channel": "preview"
     },
     "production": {
       "autoIncrement": true,
       "android": {
         "image": "sdk-57"
-      }
+      },
+      "channel": "production"
     }
   },
   "submit": {

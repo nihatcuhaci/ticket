@@ -8,7 +8,10 @@
     "userInterfaceStyle": "light",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.nihatcuhaci.eurotrain"
+      "bundleIdentifier": "com.nihatcuhaci.eurotrain",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "package": "com.nihatcuhaci.eurotrain",
@@ -27,6 +30,12 @@
       "eas": {
         "projectId": "9d76b6ad-204e-478b-aacd-6ce673db112e"
       }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/9d76b6ad-204e-478b-aacd-6ce673db112e"
     }
   }
 }

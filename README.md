@@ -4,6 +4,14 @@ A take-home submission for Odamigo's **AI Product Development Case: EuroTrain Mo
 
 Built with React Native (Expo) + TypeScript. Runs on iOS, Android and web from a single codebase.
 
+## Live Preview
+
+No install, no account needed to try it — scan or open on a phone with the free **Expo Go** app installed ([App Store](https://apps.apple.com/app/expo-go/id982107779) / [Play Store](https://play.google.com/store/apps/details?id=host.exp.exponent)):
+
+**[expo.dev/preview/update?...](https://expo.dev/preview/update?message=Runtime+version+d%C3%BCzeltmesi&updateRuntimeVersion=1.0.0&createdAt=2026-08-23T14%3A20%3A41.726Z&slug=exp&projectId=9d76b6ad-204e-478b-aacd-6ce673db112e&group=34f3308b-5ae8-47dc-bfa5-0d60f55738e1)**
+
+This opens the actual app running natively on your device via EAS Update, published from the `preview` branch — not a web preview or a mockup, the real `journeyGenerator`/`bookingLink`/`liveScheduleService` code from this repo. No login or Expo account required to open the link; it's a public preview page with a QR code and an "Open in Expo Go" option, verified working (logged out) on both Android and iOS. (For a browser-based preview instead, see §2 Quick Start for the local `expo export --platform web` build.)
+
 ---
 
 ## 1. What I Built
