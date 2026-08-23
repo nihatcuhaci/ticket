@@ -160,13 +160,14 @@ Ekranlar düzeni ve kullanıcı etkileşimini sahiplenir; bileşenler yeniden ku
 - Canlı kapsamın aktarmalı/interline yolculuklara genişletilmesi (şu anda yalnızca tek-doğrudan-tren)
 - Gerçek beslemeye ulaşılabildiğinde peron/gecikme verisinin ona karşı doğrulanması (şu anda yalnızca sentetik bir fixture'a karşı test edildi)
 - Hesaplar + cihazlar arasında senkronize kayıtlı aramalar (bugünkü son aramalar, §7.7, yalnızca cihazda)
-- Mevcut 9-istasyonluk tohumun ötesinde genişletilmiş istasyon/güzergah tablosu
-- eurotrain.net'e sınıf-farkında derin bağlantı (URL şemasının desteklediği henüz doğrulanmadı)
 - Daha güçlü bir bağlantı kontrolü: yalnızca `navigator.onLine`/OS durumu değil, aktif bir erişilebilirlik probu
 - Açık-çeneli (open-jaw) yolculuklar (vardığınızdan farklı bir şehirden dönmek)
 - Zaten var olan gerçek zamanlı gecikme verisi (§7.6) üzerine inşa edilen canlı tren durumu push bildirimleri
 - Huni terk oranı analitiği (arama → sonuçlar → checkout → yönlendirme-tıklaması)
-- Daha geniş otomatik test kapsamı: `journeyGenerator`, `bookingLink`, `recentSearches` üzerinde birim testleri; tam akış üzerinde e2e
+- Google hesabıyla bağlanma (hesap eşleme): kayıtlı aramaların ve ileride olası rezervasyon geçmişinin, ayrı bir e-posta/şifre akışı kurmadan cihazlar arasında kullanıcıyı takip edebilmesini sağlar; ayrıca yaygın kullanılan Google Takvim entegrasyonundan yararlanarak planlanan yolculukları kullanıcının takvimine otomatik olarak ekler. Üyelik oluşturmayı kolaylaştırarak kullanıcı memnuniyetini önceliklendiren bir adım.
+- Yukarıdaki canlı tren durumu bildirimlerinin yerine değil, üzerine eklenen, teklif ve güncellemeler için push bildirimleri
+- Ayrı bir e-posta kanalı kurmadan sezonluk teklifleri veya duyuruları öne çıkarmak için uygulama içi kampanya pop-up'ları
+- Gerçek dünya hatalarının manuel QA'ya bağlı kalmadan otomatik olarak ortaya çıkması için, hatalar üzerine bir Firebase entegrasyonu
 
 **Gelecek**
 - Sadakat/puan programı
@@ -175,6 +176,12 @@ Ekranlar düzeni ve kullanıcı etkileşimini sahiplenir; bileşenler yeniden ku
 - TR/CY/AZ pazarlarını tam kapsamak için Rusça dil desteği
 - Kullanım verisi gerektirdiğini gösterirse, bugünkü statik SSS + bağlantı-verme yerine Yardım ekranında uygulama içi destek sohbeti
 - MVP'de zaten var olan tekerlekli sandalye-kullanıcısı arama bayrağının ötesinde tam bir erişilebilirlik denetimi
+- Kullanıcıların uygulama içinde nereye dokunup nasıl kaydırdığını gösteren heatmap takibi, gelecekteki UX önceliklerini bu veriyle şekillendirmek için
+- Arama akışını kesmek yerine olumlu bir andan sonra (örn. bir yönlendirme tamamlandığında) gösterilen bir "uygulamayı değerlendir" pop-up'ı
+- Firebase tabanlı satın alma hunisi (funnel) takibi, kullanıcıların hangi adımda (arama, sonuçlar, checkout, yönlendirme) tam olarak vazgeçtiğini tespit etmek için
+- A/B test altyapısı (Firebase A/B Testing), fiyatlandırma sunumunu, paket isimlerini veya buton renklerini kullanıcı grupları arasında test etmek için
+- Coğrafi konuma veya kullanıcı segmentine göre farklı fiyat/paket sunumu yapan dinamik fiyatlandırma
+- Sepeti terk edeni yakalama: kullanıcı Checkout'a girip yönlendirmeyi tamamlamadan çıkarsa, bir süre sonra (örn. 15 dakika ya da 1 saat) Firebase Cloud Messaging ya da OneSignal üzerinden otomatik bir indirim bildirimi tetiklemek
 
 ---
 

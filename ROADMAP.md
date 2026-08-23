@@ -25,13 +25,14 @@ A concise view of what's in this MVP submission, what comes right after it, and 
 - Live schedule coverage extended to connecting/interline journeys (currently single-through-train only)
 - Platform and delay data verified against the real GTFS feed once reachable (currently built and tested against a synthetic fixture only)
 - Accounts, with saved searches synced across devices (today's recent searches are on-device only)
-- An expanded station/route table beyond the current 9-station, 14-route seed set
-- Seat-class-aware deep-linking (passing the user's Standard/Plus/Premier pick through to eurotrain.net, pending confirmation their URL scheme supports it)
 - A stronger connectivity check: an active reachability probe, not just `navigator.onLine`/OS-reported state
 - Open-jaw trips (returning from a different city than you arrived in)
 - Push notifications for live train status, built on top of the real-time delay data this MVP already has
 - Funnel drop-off analytics (search → results → checkout → handoff-click) to validate the core journey with real users
-- Broader automated test coverage: unit tests on `journeyGenerator`, `bookingLink` and `recentSearches`, plus e2e on the full flow (today's verification is a manual Playwright smoke-walk done during development)
+- Sign in with Google (account linking): lets saved searches, and any future booking history, follow a user across devices without a bespoke email/password flow, and taps into the widely used Google Calendar integration to automatically add planned trips to the user's calendar. A deliberate move to lower signup friction and prioritize user convenience.
+- Push notifications for promotions and updates, layered on top of the live train-status alerts above rather than replacing them
+- In-app campaign pop-ups, for surfacing seasonal offers or announcements without standing up a separate email channel
+- Firebase integration for crash and error reporting, so real-world failures surface automatically instead of relying on manual QA
 
 ## Future
 
@@ -41,3 +42,9 @@ A concise view of what's in this MVP submission, what comes right after it, and 
 - Russian language support, to fully cover the TR/CY/AZ markets (Turkish/English already shipped in this MVP)
 - An in-app support chat on the Help screen, replacing today's static FAQ + link-out, if usage data shows static content isn't enough
 - A full accessibility audit, beyond the wheelchair-user search flag already in this MVP
+- Heatmap tracking of in-app taps and scrolling, to see where users actually engage and inform future UX priorities
+- A "rate this app" pop-up, timed to appear after a positive moment (e.g. right after a completed handoff) rather than interrupting the search flow
+- Firebase-based purchase funnel tracking, to pinpoint exactly which step (search, results, checkout, handoff) users drop off at
+- A/B testing infrastructure (Firebase A/B Testing), to test pricing framing, plan names, or button colors across user cohorts
+- Dynamic pricing, varying fare or plan presentation by geography or user segment
+- Abandoned-cart recovery: if a user enters Checkout without completing the handoff, trigger an automatic discount notification (via Firebase Cloud Messaging or OneSignal) after a delay, e.g. 15 minutes or 1 hour
