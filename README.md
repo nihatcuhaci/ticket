@@ -4,6 +4,8 @@ A take-home submission for Odamigo's **AI Product Development Case: EuroTrain Mo
 
 Built with React Native (Expo) + TypeScript. Runs on iOS, Android and web from a single codebase.
 
+📍 **Looking for the roadmap?** See [`ROADMAP.md`](./ROADMAP.md) for a concise, bullet-point MVP / Post-MVP / Future breakdown — this README's [§13](#13-roadmap) covers the same ground in full prose with the reasoning behind each item.
+
 ## Live Preview
 
 No install, no account needed to try it — scan or open on a phone with the free **Expo Go** app installed ([App Store](https://apps.apple.com/app/expo-go/id982107779) / [Play Store](https://play.google.com/store/apps/details?id=host.exp.exponent)):
@@ -208,6 +210,8 @@ Per the brief, production-grade auth/payments/security hardening was intentional
 - The launch animation (§1) runs for a fixed ~2.2s and isn't user-skippable; since it overlays rather than blocks the app underneath (App.tsx), this only affects perceived launch time, not functionality.
 
 ## 13. Roadmap
+
+*A concise, bullet-point version of this section — split cleanly into MVP / Post-MVP / Future — is also available as a standalone file: [`ROADMAP.md`](./ROADMAP.md).*
 
 **MVP (this submission)** — one-way and round-trip search with a full Turkish/English UI (§6), quick-date presets and a cheapest-day highlight alongside date/fare comparison, real GTFS-sourced departure times and delays where available (§7.6) with a clearly-labelled synthetic fallback elsewhere, on-device recent searches (§7.7), a trip summary + real eurotrain.net deep-link handoff at checkout (single link, both legs, for a round trip), an in-app Help & contact screen linking out to eurotrain.net's real support pages, a real device-connectivity gate, an animated launch intro, core empty/loading/error states, live FX conversion with fallback.
 

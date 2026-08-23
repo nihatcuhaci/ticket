@@ -4,6 +4,8 @@ Odamigo'nun **AI Product Development Case: EuroTrain Mobile Experience** görevi
 
 React Native (Expo) + TypeScript ile geliştirildi. Tek bir kod tabanından iOS, Android ve web'de çalışır.
 
+📍 **Yol haritasını mı arıyorsun?** Kısa, madde işaretli bir MVP / Post-MVP / Gelecek dökümü için [`ROADMAP.md`](./ROADMAP.md)'ye bak — bu README'nin [§13](#13-yol-haritası) bölümü aynı içeriği, her maddenin gerekçesiyle birlikte uzun anlatım halinde kapsıyor.
+
 ## Canlı önizleme
 
 Kurulum ya da hesap gerekmiyor — ücretsiz **Expo Go** uygulaması kurulu bir telefondan tarat ya da aç ([App Store](https://apps.apple.com/app/expo-go/id982107779) / [Play Store](https://play.google.com/store/apps/details?id=host.exp.exponent)):
@@ -207,6 +209,8 @@ Brief'e göre, production-kalitesinde kimlik doğrulama/ödeme/güvenlik sertle�
 - Açılış animasyonu (§1) sabit ~2,2 saniye sürüyor ve kullanıcı tarafından atlanamıyor; alttaki uygulamayı engellemek yerine üzerine bindirildiğinden (App.tsx), bu yalnızca algılanan açılış süresini etkiliyor, işlevselliği değil.
 
 ## 13. Yol haritası
+
+*Bu bölümün kısa, madde işaretli hâli — MVP / Post-MVP / Gelecek olarak net şekilde ayrılmış — ayrı bir dosya olarak da mevcut: [`ROADMAP.md`](./ROADMAP.md).*
 
 **MVP (bu teslim)** — tam bir Türkçe/İngilizce arayüzle (§6) tek yön ve gidiş-dönüş arama, tarih/ücret karşılaştırmasının yanında hızlı tarih ön ayarları ve bir en-ucuz-gün vurgusu, uygun olan yerlerde gerçek GTFS kaynaklı kalkış saatleri ve gecikmeler (§7) ile diğer yerlerde açıkça etiketlenmiş sentetik bir yedek, cihaz üzerinde son aramalar (§7), checkout'ta bir yolculuk özeti + gerçek eurotrain.net derin bağlantı yönlendirmesi (gidiş-dönüş için tek bağlantı, her iki bacak), eurotrain.net'in gerçek destek sayfalarına bağlantı veren uygulama içi bir Yardım ve iletişim ekranı, gerçek bir cihaz-bağlantısı kapısı, animasyonlu bir açılış ekranı, temel boş/yükleniyor/hata durumları, yedekli canlı FX dönüşümü.
 
