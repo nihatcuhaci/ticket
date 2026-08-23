@@ -10,7 +10,7 @@ React Native (Expo) + TypeScript ile geliştirildi. Tek bir kod tabanından iOS,
 
 Kurulum ya da hesap gerekmiyor. Ücretsiz **Expo Go** uygulaması kurulu bir telefondan tarat ya da aç ([App Store](https://apps.apple.com/app/expo-go/id982107779) / [Play Store](https://play.google.com/store/apps/details?id=host.exp.exponent)):
 
-**[expo.dev/preview/update?...](https://expo.dev/preview/update?message=Runtime+version+d%C3%BCzeltmesi&updateRuntimeVersion=1.0.0&createdAt=2026-08-23T14%3A20%3A41.726Z&slug=exp&projectId=9d76b6ad-204e-478b-aacd-6ce673db112e&group=34f3308b-5ae8-47dc-bfa5-0d60f55738e1)**
+**[expo.dev/preview/update/expo-go?...](https://expo.dev/preview/update/expo-go?message=Fix&updateRuntimeVersion=exposdk%3A57.0.0&createdAt=2026-08-23T21%3A12%3A49.856Z&slug=exp&projectId=9d76b6ad-204e-478b-aacd-6ce673db112e&group=b7b47140-1ff4-47ff-8425-747209d7a2c7)**
 
 Bu link, cihazda gerçekten native olarak çalışan uygulamayı EAS Update üzerinden `preview` branch'inden açıyor: web önizlemesi ya da mockup değil, bu reponun gerçek `journeyGenerator`/`bookingLink`/`liveScheduleService` kodu. Linki açmak için giriş yapmaya ya da Expo hesabına gerek yok; herkese açık bir önizleme sayfası, QR kod ve "Open in Expo Go" seçeneğiyle. Çıkış yapılmış bir oturumda hem Android hem iOS'ta çalıştığı doğrulandı. (Tarayıcı tabanlı bir önizleme istersen, yerel `expo export --platform web` build'i için [§2 Hızlı başlangıç](#2-hızlı-başlangıç)'a bakın.)
 
