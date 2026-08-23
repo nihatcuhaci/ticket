@@ -182,6 +182,11 @@ Ekranlar düzeni ve kullanıcı etkileşimini sahiplenir; bileşenler yeniden ku
 - A/B test altyapısı (Firebase A/B Testing), fiyatlandırma sunumunu, paket isimlerini veya buton renklerini kullanıcı grupları arasında test etmek için
 - Coğrafi konuma veya kullanıcı segmentine göre farklı fiyat/paket sunumu yapan dinamik fiyatlandırma
 - Sepeti terk edeni yakalama: kullanıcı Checkout'a girip yönlendirmeyi tamamlamadan çıkarsa, bir süre sonra (örn. 15 dakika ya da 1 saat) Firebase Cloud Messaging ya da OneSignal üzerinden otomatik bir indirim bildirimi tetiklemek
+- Geçici koltuk kilitleme: seçilen koltuğu veritabanında birkaç dakika (örn. 5 dakika) için kilitleyip ekranda bir geri sayım göstererek, kullanıcıyı checkout'u daha hızlı tamamlamaya iten bir aciliyet hissi yaratmak
+- Checkout'ta Apple Pay ve Google Pay desteği, kullanıcının uzun kredi kartı numarası girmesine gerek kalmadan
+- Fiyat/koltuk alarmları: kullanıcının, yer bulamadığı bir arama ya da düşmesini beklediği bir fiyat için alarm kurabilmesi; koltuk açıldığı ya da fiyat düştüğü an [Firebase Cloud Messaging](https://firebase.google.com/products/cloud-messaging) ya da [OneSignal](https://onesignal.com/) üzerinden tetiklenir
+- Sonuçlar listesinde, bir seferde son birkaç koltuk kaldığında ("Son 3 koltuk!" gibi) kalın/kırmızı yazıyla vurgulanan bir kalan koltuk sayısı göstergesi
+- Checkout'tan hemen önce, seyahat sigortası, tren içi yemek menüsü ya da varış noktasında yerel transfer/araç kiralama (örn. [Uber API](https://developer.uber.com/) ya da Rentalcars API üzerinden) gibi çapraz satış entegrasyonlarının sepet onay kutusu olarak sunulması
 
 ---
 

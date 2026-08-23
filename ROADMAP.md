@@ -48,3 +48,8 @@ A concise view of what's in this MVP submission, what comes right after it, and 
 - A/B testing infrastructure (Firebase A/B Testing), to test pricing framing, plan names, or button colors across user cohorts
 - Dynamic pricing, varying fare or plan presentation by geography or user segment
 - Abandoned-cart recovery: if a user enters Checkout without completing the handoff, trigger an automatic discount notification (via Firebase Cloud Messaging or OneSignal) after a delay, e.g. 15 minutes or 1 hour
+- Temporary seat locking: holds a selected seat in the database for a few minutes (e.g. 5) with an on-screen countdown, using urgency to nudge users toward completing checkout faster
+- Apple Pay and Google Pay support at checkout, so users don't have to type a card number by hand
+- Price/seat alarms: lets a user set an alert for a sold-out search or a fare they're waiting to drop, triggered via [Firebase Cloud Messaging](https://firebase.google.com/products/cloud-messaging) or [OneSignal](https://onesignal.com/) the moment a seat opens up or the price falls
+- A "seats remaining" indicator, highlighting low availability (e.g. "3 seats left") in bold/red on the Results list once a departure is down to its last few seats
+- Cross-sell integrations just before Checkout, offering travel insurance, an on-board meal add-on, or local transfer/car rental at the destination (e.g. via the [Uber API](https://developer.uber.com/) or the Rentalcars API) as opt-in checkboxes
