@@ -16,6 +16,8 @@ Bu link, cihazda gerçekten native olarak çalışan uygulamayı EAS Update üze
 
 Expo Go'ya gerek kalmadan Android'e doğrudan kurulumu mu tercih edersiniz? APK'yı doğrudan EAS build sayfasından indirin: **[expo.dev/.../builds/d6a0faa3-...](https://expo.dev/accounts/nhttt/projects/eurotrain/builds/d6a0faa3-4a37-48ec-b61a-342ad380d9bb)**. Orada da giriş yapmaya gerek yok, projenin internal build'ler için hesapsız erişim ayarı açık. Bu build linki oluşturulduğu tarihten (23 Ağustos 2026) itibaren yaklaşık 30 gün geçerli kalır.
 
+iOS'ta (ya da herhangi bir tarayıcıda): **[nihatcuhaci.github.io/ticket](https://nihatcuhaci.github.io/ticket/)**, deploy edilmiş web export'u. Bu teslimde native bir iOS build'i yok, çünkü fiziksel bir iPhone'a gerçek bir uygulama kurmak ücretli bir Apple Developer Program üyeliği gerektiriyor ve bu projede böyle bir hesap yok.
+
 ---
 
 ## 1. Neler yaptım

@@ -16,6 +16,8 @@ This opens the actual app running natively on your device via EAS Update, publis
 
 Prefer a direct install on Android, no Expo Go needed? Download the APK straight from the EAS build page: **[expo.dev/.../builds/d6a0faa3-...](https://expo.dev/accounts/nhttt/projects/eurotrain/builds/d6a0faa3-4a37-48ec-b61a-342ad380d9bb)**. No login required there either, the project's unauthenticated-access setting for internal builds is on. This build link stays valid for about 30 days from when it was created (Aug 23, 2026).
 
+On iOS (or in any browser): **[nihatcuhaci.github.io/ticket](https://nihatcuhaci.github.io/ticket/)**, the deployed web export. There's no native iOS build in this submission because installing a real app on a physical iPhone requires a paid Apple Developer Program membership, which this project doesn't have.
+
 ---
 
 ## 1. What I Built
