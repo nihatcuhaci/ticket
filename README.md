@@ -10,7 +10,7 @@ Built with React Native (Expo) + TypeScript. Runs on iOS, Android and web from a
 
 No install, no account needed to try it. Scan or open on a phone with the free **Expo Go** app installed ([App Store](https://apps.apple.com/app/expo-go/id982107779) / [Play Store](https://play.google.com/store/apps/details?id=host.exp.exponent)):
 
-**[expo.dev/preview/update/expo-go?...](https://expo.dev/preview/update/expo-go?message=Fix&updateRuntimeVersion=exposdk%3A57.0.0&createdAt=2026-08-23T21%3A12%3A49.856Z&slug=exp&projectId=9d76b6ad-204e-478b-aacd-6ce673db112e&group=b7b47140-1ff4-47ff-8425-747209d7a2c7)**
+**[expo.dev/preview/update?...](https://expo.dev/preview/update?message=Fix&updateRuntimeVersion=exposdk%3A57.0.0&createdAt=2026-08-23T21%3A12%3A49.856Z&slug=exp&projectId=9d76b6ad-204e-478b-aacd-6ce673db112e&group=b7b47140-1ff4-47ff-8425-747209d7a2c7)** (on the page, choose **Expo Go**, not "Development build")
 
 This opens the actual app running natively on your device via EAS Update, published from the `preview` branch: not a web preview or a mockup, the real `journeyGenerator`/`bookingLink`/`liveScheduleService` code from this repo. No login or Expo account required to open the link; it's a public preview page with a QR code and an "Open in Expo Go" option, verified working (logged out) on both Android and iOS. (For a browser-based preview instead, see §2 Quick Start for the local `expo export --platform web` build.)
 
